@@ -6,6 +6,8 @@
   3 input arrays.
 */
 
+#define VERSION "0.1"
+
 #include <float.h>
 #include <omp.h>
 #include <stdio.h>
@@ -16,6 +18,8 @@
 
 int main(void)
 {
+
+  printf("MEGA-STREAM! - v%s\n", VERSION);
 
   const int ntimes = 10;
   double timings[ntimes];
