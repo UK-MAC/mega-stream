@@ -6,14 +6,19 @@
   3 input arrays.
 */
 
+#include <float.h>
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define MIN(a,b) ((a) < (b)) ? (a) : (b)
+#define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
 int main(void)
 {
 
   const int ntimes = 10;
+  double timings[ntimes];
 
   const unsigned int L_size = 200000000;
   const unsigned int M_size =  10000000;
@@ -71,8 +76,7 @@ int main(void)
       r[i] = q[i] + a[i%S_size]*x[i%M_size] + b[i%S_size]*y[i%M_size] + c[i%S_size]*z[i%M_size];
     }
     double tock = omp_get_wtime();
-    printf("Iteration %d took %lf\n", t, tock-tick);
-    printf("Bandwidth: %lf MB/s\n", size/(tock-tick));
+    timings[t] = tock-tick;
 
   }
 
@@ -86,6 +90,21 @@ int main(void)
       break;
     }
   }
+
+  /* Print timings */
+  double min = DBL_MAX;
+  double max = 0.0;
+  double avg = 0.0;
+  for (int t = 1; t < ntimes; t++)
+  {
+    min = MIN(min, timings[t]);
+    max = MAX(max, timings[t]);
+    avg += timings[t];
+  }
+  avg /= (double)(ntimes - 1);
+
+  printf("Bandwidth MB/s  Avg time    Min time    Max time\n");
+  printf("%12.1f %11.6f %11.6f %11.6f\n", size/min, min, max, avg);
 
   /* Free memory */
   free(q);
