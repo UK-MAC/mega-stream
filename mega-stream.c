@@ -156,6 +156,18 @@ void parse_args(int argc, char *argv[])
       printf("Setting: Small\n");
       M_size = SMALL;
     }
+    else if (strcmp(argv[i], "--help") == 0)
+    {
+      printf("Usage: %s [OPTION]\n", argv[0]);
+      printf("\t --large\tMake all arrays large in size\n");
+      printf("\t --medium\t2 large arrays, and 6 medium arrays\n");
+      printf("\t --small\t2 large arrays, and 6 small arrays\n");
+      printf("\n");
+      printf("\t Large  is %12d elements\n", LARGE);
+      printf("\t Medium is %12d elements\n", MEDIUM);
+      printf("\t Small  is %12d elements\n", SMALL);
+      exit(EXIT_SUCCESS);
+    }
     else
     {
       fprintf(stderr, "Unrecognised argument \"%s\"\n", argv[i]);
