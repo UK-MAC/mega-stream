@@ -12,21 +12,30 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
-int main(void)
+#define LARGE  200000000
+#define MEDIUM  10000000
+#define SMALL        100
+
+void parse_args(int argc, char *argv[]);
+
+unsigned int L_size = LARGE;
+unsigned int M_size = MEDIUM;
+unsigned int S_size = SMALL;
+
+int main(int argc, char *argv[])
 {
 
   printf("MEGA-STREAM! - v%s\n", VERSION);
 
+  parse_args(argc, argv);
+
   const int ntimes = 10;
   double timings[ntimes];
-
-  const unsigned int L_size = 200000000;
-  const unsigned int M_size =  10000000;
-  const unsigned int S_size =       100;
 
   const double size = 8.0 * (2.0*L_size + 3.0*M_size + 3.0*S_size) * 1.0E-6;
 
@@ -120,4 +129,37 @@ int main(void)
   free(b);
   free(c);
 
+  return EXIT_SUCCESS;
+
+}
+
+void parse_args(int argc, char *argv[])
+{
+  for (int i = 1; i < argc; i++)
+  {
+    if (strcmp(argv[i], "--large") == 0)
+    {
+      /* All arrays are large */
+      printf("Setting: Large\n");
+      M_size = LARGE;
+      S_size = LARGE;
+    }
+    else if (strcmp(argv[i], "--medium") == 0)
+    {
+      /* Large arrays with only medium arrays */
+      printf("Setting: Medium\n");
+      S_size = MEDIUM;
+    }
+    else if (strcmp(argv[i], "--small") == 0)
+    {
+      /* Large arrays with only small arrays */
+      printf("Setting: Small\n");
+      M_size = SMALL;
+    }
+    else
+    {
+      fprintf(stderr, "Unrecognised argument \"%s\"\n", argv[i]);
+      exit(EXIT_FAILURE);
+    }
+  }
 }
