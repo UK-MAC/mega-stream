@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
   }
   avg /= (double)(ntimes - 1);
 
-  printf("Bandwidth MB/s  Avg time    Min time    Max time\n");
+  printf("Bandwidth MB/s  Min time    Max time    Avg time\n");
   printf("%12.1f %11.6f %11.6f %11.6f\n", size/min, min, max, avg);
 
   /* Free memory */
