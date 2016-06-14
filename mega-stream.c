@@ -156,6 +156,13 @@ void parse_args(int argc, char *argv[])
       printf("Setting: Small\n");
       M_size = SMALL;
     }
+    else if (strcmp(argv[i], "--custom") == 0)
+    {
+      unsigned int size = atoi(argv[++i]);
+      printf("Setting: Custom - %d\n", size);
+      M_size = size;
+      S_size = size;
+    }
     else if (strcmp(argv[i], "--help") == 0)
     {
       printf("Usage: %s [OPTION]\n", argv[0]);
