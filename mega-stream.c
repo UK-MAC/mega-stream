@@ -83,10 +83,15 @@ int main(int argc, char *argv[])
   {
     double tick = omp_get_wtime();
     /* Kernel */
-    #pragma omp parallel for
+    int j = 0;
+    int k = 0;
+    #pragma omp parallel for firstprivate(j,k)
     for (unsigned int i = 0; i < L_size; i++)
     {
-      r[i] = q[i] + a[i%S_size]*x[i%M_size] + b[i%S_size]*y[i%M_size] + c[i%S_size]*z[i%M_size];
+     
+      r[i] = q[i] + a[k]*x[j] + b[k]*y[j] + c[k]*z[j];
+      j = (j == M_size-1) ? 0 : j+1;
+      k = (k == S_size-1) ? 0 : k+1;
     }
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
