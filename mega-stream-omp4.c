@@ -17,9 +17,9 @@
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
-#define LARGE  1073741824 // 2^27
-#define MEDIUM    8388608 // 2^23
-#define SMALL         128
+#define LARGE  16777216 // 2^24
+#define MEDIUM  8388608 // 2^23
+#define SMALL       128
 
 void parse_args(int argc, char *argv[]);
 
