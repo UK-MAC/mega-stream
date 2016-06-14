@@ -17,7 +17,7 @@
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
-#define LARGE  1073741824 // 2^27
+#define LARGE   134217728// 2^27
 #define MEDIUM    8388608 // 2^23
 #define SMALL         128
 
