@@ -39,6 +39,10 @@ int main(int argc, char *argv[])
 
   const double size = 8.0 * (2.0*L_size + 3.0*M_size + 3.0*S_size) * 1.0E-6;
 
+  /* The following assumes sizes are powers of 2 */
+  const unsigned int S_mask = S_size - 1;
+  const unsigned int M_mask = M_size - 1;
+
   double *q = malloc(sizeof(double)*L_size);
   double *r = malloc(sizeof(double)*L_size);
 
@@ -86,7 +90,7 @@ int main(int argc, char *argv[])
     #pragma omp parallel for
     for (unsigned int i = 0; i < L_size; i++)
     {
-      r[i] = q[i] + a[i%S_size]*x[i%M_size] + b[i%S_size]*y[i%M_size] + c[i%S_size]*z[i%M_size];
+      r[i] = q[i] + a[i&S_mask]*x[i&M_mask] + b[i&S_mask]*y[i&M_mask] + c[i&S_mask]*z[i&M_mask];
     }
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
