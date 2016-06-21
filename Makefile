@@ -1,14 +1,22 @@
 
 CC = icc
-CFLAGS = -std=c99 -O3 -qopenmp
+CFLAGS = -std=c99 -O3
+
+FTN = ifort
+FFLAGS = -O3
+
+OMP = -qopenmp
 
 default: mega-stream
 
 mega-stream: mega-stream.c
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(OMP) $^ -o $@
 
 mega-stream-omp4: mega-stream-omp4.c
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(OMP) $^ -o $@
+
+mega-stream-ftn: mega-stream.f90
+	$(FTN) $(FFLAGS) $(OMP) $^ -o $@
 
 .PHONY: clean
 
