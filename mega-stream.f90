@@ -1,5 +1,9 @@
 PROGRAM megastreamftn
 
+!
+! Test whether adding in a small array to a STREAM copy reduces memory bandwidth
+!
+
   USE omp_lib
 
   IMPLICIT NONE
@@ -13,16 +17,17 @@ PROGRAM megastreamftn
  
   INTEGER :: L_size, S_size
 
-  INTEGER :: i, t, ntimes
+  INTEGER :: i, t, ntimes = 10
 
   DOUBLE PRECISION :: tick, tock
 
   CHARACTER(len=32) :: arg
 
+
+! Set the default S_size
   S_size = 128
 
-! Check if --ssize is set
-
+! --ssize option can be used to change S_size
   IF (iargc() > 1) THEN
     CALL getarg(1, arg)
     IF (arg == "--ssize") THEN
@@ -32,10 +37,12 @@ PROGRAM megastreamftn
     ENDIF
   ENDIF
 
+
+! Set large size so total array is 2^27 doubles
   L_size = 134217728 / S_size
 
-  ntimes = 10
 
+  ! Total memory movement in GB
   size = 8.0 * (2.0*L_size*S_size + 2.0*S_size) * 1.0E-6
   
   ALLOCATE(r(S_size,L_size))
@@ -44,6 +51,8 @@ PROGRAM megastreamftn
   ALLOCATE(x(S_size))
   ALLOCATE(times(ntimes))
 
+
+!Initilise data
 !$OMP PARALLEL WORKSHARE
   r = 0.0_8
   q = 0.1_8
@@ -51,10 +60,17 @@ PROGRAM megastreamftn
   a = 0.6_8
 !$OMP END PARALLEL WORKSHARE
 
+!-----------
+! Main loop
+!-----------
+
   iters: DO t = 1, ntimes
 
     tick = omp_get_wtime()
 
+    !-----------
+    ! Kernel
+    !-----------
     !$OMP PARALLEL DO
       DO i = 1, L_size
         r(:,i) = q(:,i) + a(:)*x(:)
@@ -67,6 +83,8 @@ PROGRAM megastreamftn
 
   END DO iters
 
+
+! Print bandwidth of fastest time, ignoring the first iteration
   print *, size/MINVAL(times(2:))
   
   DEALLOCATE(r)
