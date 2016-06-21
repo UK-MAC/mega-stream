@@ -9,7 +9,8 @@ PROGRAM megastreamftn
   IMPLICIT NONE
   
   REAL(8), ALLOCATABLE, DIMENSION(:,:) :: r, q
-  REAL(8), ALLOCATABLE, DIMENSION(:)   :: a, x
+  REAL(8), ALLOCATABLE, DIMENSION(:)   :: a, b, c
+  REAL(8), ALLOCATABLE, DIMENSION(:)   :: x, y, z
 
   REAL(8), ALLOCATABLE, DIMENSION(:) :: times
 
@@ -48,7 +49,12 @@ PROGRAM megastreamftn
   ALLOCATE(r(S_size,L_size))
   ALLOCATE(q(S_size,L_size))
   ALLOCATE(a(S_size))
+  ALLOCATE(b(S_size))
+  ALLOCATE(c(S_size))
   ALLOCATE(x(S_size))
+  ALLOCATE(y(S_size))
+  ALLOCATE(z(S_size))
+
   ALLOCATE(times(ntimes))
 
 
@@ -57,7 +63,11 @@ PROGRAM megastreamftn
   r = 0.0_8
   q = 0.1_8
   x = 0.2_8
+  y = 0.3_8
+  z = 0.4_8
   a = 0.6_8
+  b = 0.7_8
+  c = 0.8_8
 !$OMP END PARALLEL WORKSHARE
 
 !-----------
@@ -72,9 +82,9 @@ PROGRAM megastreamftn
     ! Kernel
     !-----------
     !$OMP PARALLEL DO
-      DO i = 1, L_size
-        r(:,i) = q(:,i) + a(:)*x(:)
-      END DO
+    DO i = 1, L_size
+      r(:,i) = q(:,i) + a(:)*x(:) + b(:)*y(:) + c(:)*z(:)
+    END DO
     !$OMP END PARALLEL DO
 
     tock = omp_get_wtime()
@@ -90,7 +100,11 @@ PROGRAM megastreamftn
   DEALLOCATE(r)
   DEALLOCATE(q)
   DEALLOCATE(a)
+  DEALLOCATE(b)
+  DEALLOCATE(c)
   DEALLOCATE(x)
+  DEALLOCATE(y)
+  DEALLOCATE(z)
   DEALLOCATE(times)
 
 END PROGRAM megastreamftn
