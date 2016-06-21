@@ -58,14 +58,14 @@ int main(int argc, char *argv[])
   #pragma omp parallel
   {
     #pragma omp for
-    for (unsigned int i = 0; i < L_size; i++)
+    for (int i = 0; i < L_size; i++)
     {
       q[i] = 0.1;
       r[i] = 0.0;
     }
 
     #pragma omp for
-    for (unsigned int i = 0; i < M_size; i++)
+    for (int i = 0; i < M_size; i++)
     {
       x[i] = 0.2;
       y[i] = 0.3;
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     }
 
     #pragma omp for
-    for (unsigned int i = 0; i < S_size; i++)
+    for (int i = 0; i < S_size; i++)
     {
       a[i] = 0.6;
       b[i] = 0.7;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     double tick = omp_get_wtime();
     /* Kernel */
     #pragma omp parallel for
-    for (unsigned int i = 0; i < L_size; i++)
+    for (int i = 0; i < L_size; i++)
     {
       r[i] = q[i] + a[i&S_mask]*x[i&M_mask] + b[i&S_mask]*y[i&M_mask] + c[i&S_mask]*z[i&M_mask];
     }
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
   /* Check the results */
   double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
-  for (unsigned int i = 0; i < L_size; i++)
+  for (int i = 0; i < L_size; i++)
   {
     if (r[i] != gold)
     {
