@@ -17,7 +17,21 @@ PROGRAM megastreamftn
 
   DOUBLE PRECISION :: tick, tock
 
+  CHARACTER(len=32) :: arg
+
   S_size = 128
+
+! Check if --ssize is set
+
+  IF (iargc() > 1) THEN
+    CALL getarg(1, arg)
+    IF (arg == "--ssize") THEN
+      CALL getarg(2, arg)
+      READ(arg,*) S_size
+      PRINT *, "Setting S_size"
+    ENDIF
+  ENDIF
+
   L_size = 134217728 / S_size
 
   ntimes = 10
