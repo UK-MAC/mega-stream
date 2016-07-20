@@ -35,9 +35,9 @@
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
-#define LARGE  16777216 // 2^24
-#define MEDIUM  8388608 // 2^23
-#define SMALL       128
+#define LARGE   134217728// 2^27
+#define MEDIUM    8388608 // 2^23
+#define SMALL         128
 
 void parse_args(int argc, char *argv[]);
 
@@ -57,6 +57,10 @@ int main(int argc, char *argv[])
 
   const double size = 8.0 * (2.0*L_size + 3.0*M_size + 3.0*S_size) * 1.0E-6;
 
+  /* The following assumes sizes are powers of 2 */
+  const unsigned int S_mask = S_size - 1;
+  const unsigned int M_mask = M_size - 1;
+
   double *q = malloc(sizeof(double)*L_size);
   double *r = malloc(sizeof(double)*L_size);
 
@@ -72,14 +76,14 @@ int main(int argc, char *argv[])
   #pragma omp parallel
   {
     #pragma omp for
-    for (unsigned int i = 0; i < L_size; i++)
+    for (int i = 0; i < L_size; i++)
     {
       q[i] = 0.1;
       r[i] = 0.0;
     }
 
     #pragma omp for
-    for (unsigned int i = 0; i < M_size; i++)
+    for (int i = 0; i < M_size; i++)
     {
       x[i] = 0.2;
       y[i] = 0.3;
@@ -87,7 +91,7 @@ int main(int argc, char *argv[])
     }
 
     #pragma omp for
-    for (unsigned int i = 0; i < S_size; i++)
+    for (int i = 0; i < S_size; i++)
     {
       a[i] = 0.6;
       b[i] = 0.7;
@@ -99,26 +103,26 @@ int main(int argc, char *argv[])
   #pragma omp target data map(to: a[0:S_size], b[0:S_size], c[0:S_size], x[0:M_size], y[0:M_size], z[0:M_size], q[0:L_size]) map(tofrom: r[0:L_size])
   {
 
-  /* Run the kernel multiple times */
-  for (int t = 0; t < ntimes; t++)
-  {
-    double tick = omp_get_wtime();
-    /* Kernel */
-    #pragma omp target teams distribute simd map(to: a[0:S_size], b[0:S_size], c[0:S_size], x[0:M_size], y[0:M_size], z[0:M_size], q[0:L_size], r[0:L_size])
-    for (unsigned int i = 0; i < L_size; i++)
+    /* Run the kernel multiple times */
+    for (int t = 0; t < ntimes; t++)
     {
-      r[i] = q[i] + a[i%S_size]*x[i%M_size] + b[i%S_size]*y[i%M_size] + c[i%S_size]*z[i%M_size];
+      double tick = omp_get_wtime();
+      /* Kernel */
+      #pragma omp target teams distribute simd map(to: a[0:S_size], b[0:S_size], c[0:S_size], x[0:M_size], y[0:M_size], z[0:M_size], q[0:L_size], r[0:L_size])
+      for (int i = 0; i < L_size; i++)
+      {
+        r[i] = q[i] + a[i&S_mask]*x[i&M_mask] + b[i&S_mask]*y[i&M_mask] + c[i&S_mask]*z[i&M_mask];
+      }
+      double tock = omp_get_wtime();
+      timings[t] = tock-tick;
+  
     }
-    double tock = omp_get_wtime();
-    timings[t] = tock-tick;
-
-  }
-
+  
   }
 
   /* Check the results */
   double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
-  for (unsigned int i = 0; i < L_size; i++)
+  for (int i = 0; i < L_size; i++)
   {
     if (r[i] != gold)
     {
@@ -178,6 +182,13 @@ void parse_args(int argc, char *argv[])
       /* Large arrays with only small arrays */
       printf("Setting: Small\n");
       M_size = SMALL;
+    }
+    else if (strcmp(argv[i], "--custom") == 0)
+    {
+      unsigned int size = atoi(argv[++i]);
+      printf("Setting: Custom - %d\n", size);
+      M_size = size;
+      S_size = size;
     }
     else if (strcmp(argv[i], "--help") == 0)
     {
