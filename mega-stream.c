@@ -1,3 +1,4 @@
+
 /*
 
   Copyright 2016 Tom Deakin, University of Bristol
@@ -31,6 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include <immintrin.h>
 
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
@@ -52,7 +55,7 @@ int main(int argc, char *argv[])
 
   parse_args(argc, argv);
 
-  const int ntimes = 10;
+  const int ntimes = 100;
   double timings[ntimes];
 
   const double size = 8.0 * (2.0*L_size + 3.0*M_size + 3.0*S_size) * 1.0E-6;
@@ -61,16 +64,23 @@ int main(int argc, char *argv[])
   const unsigned int S_mask = S_size - 1;
   const unsigned int M_mask = M_size - 1;
 
-  double *q = malloc(sizeof(double)*L_size);
-  double *r = malloc(sizeof(double)*L_size);
+  /* Vectorization assumes that sizes are multiples of 8 */
+  assert(S_size % 8 == 0);
+  assert(M_size % 8 == 0);
+  assert(L_size % 8 == 0);
 
-  double *x = malloc(sizeof(double)*M_size);
-  double *y = malloc(sizeof(double)*M_size);
-  double *z = malloc(sizeof(double)*M_size);
+  /* Align arrays to 2 MB page boundaries */
+  const unsigned int alignment = 2*1024*1024;
+  double *restrict const q = _mm_malloc(sizeof(double)*L_size, alignment);
+  double *restrict const r = _mm_malloc(sizeof(double)*L_size, alignment);
 
-  double *a = malloc(sizeof(double)*S_size);
-  double *b = malloc(sizeof(double)*S_size);
-  double *c = malloc(sizeof(double)*S_size);
+  double *restrict const x = _mm_malloc(sizeof(double)*M_size, alignment);
+  double *restrict const y = _mm_malloc(sizeof(double)*M_size, alignment);
+  double *restrict const z = _mm_malloc(sizeof(double)*M_size, alignment);
+
+  double *restrict const a = _mm_malloc(sizeof(double)*S_size, alignment);
+  double *restrict const b = _mm_malloc(sizeof(double)*S_size, alignment);
+  double *restrict const c = _mm_malloc(sizeof(double)*S_size, alignment);
 
   /* Initalise the data */
   #pragma omp parallel
@@ -106,13 +116,20 @@ int main(int argc, char *argv[])
     double tick = omp_get_wtime();
     /* Kernel */
     #pragma omp parallel for
-    for (int i = 0; i < L_size; i++)
+    for (int i = 0; i < L_size; i += 8)
     {
-      r[i] = q[i] + a[i&S_mask]*x[i&M_mask] + b[i&S_mask]*y[i&M_mask] + c[i&S_mask]*z[i&M_mask];
+      int s = i&S_mask;
+      int m = i&M_mask;
+      #pragma vector aligned
+      #pragma vector nontemporal
+      #pragma omp simd
+      for (int v = 0; v < 8; ++v)
+      {
+         r[i+v] = q[i+v] + a[s+v]*x[m+v] + b[s+v]*y[m+v] + c[s+v]*z[m+v];
+      }
     }
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
-
   }
 
   /* Check the results */
@@ -142,14 +159,14 @@ int main(int argc, char *argv[])
   printf("%12.1f %11.6f %11.6f %11.6f\n", size/min, min, max, avg);
 
   /* Free memory */
-  free(q);
-  free(r);
-  free(x);
-  free(y);
-  free(z);
-  free(a);
-  free(b);
-  free(c);
+  _mm_free(q);
+  _mm_free(r);
+  _mm_free(x);
+  _mm_free(y);
+  _mm_free(z);
+  _mm_free(a);
+  _mm_free(b);
+  _mm_free(c);
 
   return EXIT_SUCCESS;
 
