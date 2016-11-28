@@ -115,11 +115,14 @@ int main(int argc, char *argv[])
     #pragma omp parallel for
     for (int i = 0; i < L_size; i += S_size)
     {
+      double total = 0.0;
+#pragma omp simd reduction(+:total)
       for (int j = 0; j < S_size; j++)
       {
         r[i+j] = q[i+j] + a[j]*x[(i+j)&M_mask] + b[j]*y[(i+j)&M_mask] + c[j]*z[(i+j)&M_mask];
-        sum[i/S_size] += r[i+j];
+        total += r[i+j];
       }
+      sum[i/S_size] += total;
     }
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
