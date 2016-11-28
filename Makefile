@@ -19,7 +19,7 @@
 
 
 CC = icc
-CFLAGS = -std=c99 -O3
+CFLAGS = -std=c99 -O3 -qopt-report=5
 
 FTN = ifort
 FFLAGS = -O3
