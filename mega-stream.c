@@ -72,6 +72,8 @@ int main(int argc, char *argv[])
   double *b = malloc(sizeof(double)*S_size);
   double *c = malloc(sizeof(double)*S_size);
 
+  double *sum = malloc(sizeof(double)*L_size/S_size);
+
   /* Initalise the data */
   #pragma omp parallel
   {
@@ -98,6 +100,11 @@ int main(int argc, char *argv[])
       c[i] = 0.8;
     }
 
+    #pragma omp for
+    for (int i = 0; i < L_size/S_size; i++)
+    {
+      sum[i] = 0.0;
+    }
   }
 
   /* Run the kernel multiple times */
@@ -106,9 +113,13 @@ int main(int argc, char *argv[])
     double tick = omp_get_wtime();
     /* Kernel */
     #pragma omp parallel for
-    for (int i = 0; i < L_size; i++)
+    for (int i = 0; i < L_size; i += S_size)
     {
-      r[i] = q[i] + a[i&S_mask]*x[i&M_mask] + b[i&S_mask]*y[i&M_mask] + c[i&S_mask]*z[i&M_mask];
+      for (int j = 0; j < S_size; j++)
+      {
+        r[i+j] = q[i+j] + a[j]*x[(i+j)&M_mask] + b[j]*y[(i+j)&M_mask] + c[j]*z[(i+j)&M_mask];
+        sum[i/S_size] += r[i+j];
+      }
     }
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
@@ -119,7 +130,7 @@ int main(int argc, char *argv[])
   double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
   for (int i = 0; i < L_size; i++)
   {
-    if (r[i] != gold)
+    if (r[i] != gold || sum[i/S_size] != gold*S_size*ntimes)
     {
       printf("Results incorrect\n");
       break;
@@ -150,6 +161,7 @@ int main(int argc, char *argv[])
   free(a);
   free(b);
   free(c);
+  free(sum);
 
   return EXIT_SUCCESS;
 
