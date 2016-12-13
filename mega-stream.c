@@ -247,29 +247,15 @@ void parse_args(int argc, char *argv[])
   {
     if (strcmp(argv[i], "--large") == 0)
     {
-      /* All arrays are large */
-      printf("Setting: Large\n");
-      M_size = LARGE;
-      S_size = LARGE;
+      L_size = atoi(argv[++i]);
     }
     else if (strcmp(argv[i], "--medium") == 0)
     {
-      /* Large arrays with only medium arrays */
-      printf("Setting: Medium\n");
-      S_size = MEDIUM;
+      M_size = atoi(argv[++i]);
     }
     else if (strcmp(argv[i], "--small") == 0)
     {
-      /* Large arrays with only small arrays */
-      printf("Setting: Small\n");
-      M_size = SMALL;
-    }
-    else if (strcmp(argv[i], "--custom") == 0)
-    {
-      unsigned int size = atoi(argv[++i]);
-      printf("Setting: Custom - %d\n", size);
-      M_size = size;
-      S_size = size;
+      S_size = atoi(argv[++i]);
     }
     else if (strcmp(argv[i], "--ntimes") == 0)
     {
@@ -283,9 +269,9 @@ void parse_args(int argc, char *argv[])
     else if (strcmp(argv[i], "--help") == 0)
     {
       printf("Usage: %s [OPTION]\n", argv[0]);
-      printf("\t --large\tMake all arrays large in size\n");
-      printf("\t --medium\t2 large arrays, and 6 medium arrays\n");
-      printf("\t --small\t2 large arrays, and 6 small arrays\n");
+      printf("\t --large n \tSet size of large dimension\n");
+      printf("\t --medium n \tSet size of medium dimension\n");
+      printf("\t --small n \tSet size of small dimension\n");
       printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
       printf("\t Large  is %12d elements\n", LARGE);
