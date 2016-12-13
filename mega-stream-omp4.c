@@ -22,12 +22,17 @@
   bandwidth limits not to be reached, and latency becomes a dominating factor.
   We run a kernel with a similar form to the original triad, but with more than
   3 input arrays.
+
+  The main kernel computes:
+  r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
+  sum(j,k) = SUM(r(:,j,k,))
 */
 
-#define VERSION "0.1"
+#define VERSION "0.2"
 
 #include <float.h>
 #include <omp.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,59 +40,100 @@
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
-#define LARGE  16777216 // 2^24
-#define MEDIUM    8388608 // 2^23
-#define SMALL         128
+#define IDX2(i,j,ni) ((i)+(ni)*(j))
+#define IDX3(i,j,k,ni,nj) ((i)+(ni)*IDX2((j),(k),(nj)))
+
+/*
+  Arrays are defined in terms of 3 sizes
+  The large arrays are of size SMALL*MEDIUM*LARGE and are indexed with 3 indicies.
+  The medium arrays are of size SMALL*MEDIUM and are indexed with 2 indicies.
+  The small arrays are of size SMALL and are indexed with 1 index.
+
+  By default the large array has 2^27 elements, and the small array has 64 elements (2^6).
+*/
+#define LARGE  4096 // 2^12
+#define MEDIUM  512 // 2^9
+#define SMALL    64 // 2^6
+
+/* Default alignment of 2 MB page boundaries */
+#define ALIGNMENT 2*1024*1024
+
+/* Tollerance with which to check final array values */
+#define TOLR 1.0E-15
 
 void parse_args(int argc, char *argv[]);
 
-unsigned int L_size = LARGE;
-unsigned int M_size = MEDIUM;
-unsigned int S_size = SMALL;
+int L_size = LARGE;
+int M_size = MEDIUM;
+int S_size = SMALL;
+int ntimes = 100;
 
 int main(int argc, char *argv[])
 {
 
-  printf("MEGA-STREAM! - v%s\n", VERSION);
+  printf("MEGA-STREAM! - v%s\n\n", VERSION);
+
 
   parse_args(argc, argv);
 
-  const int ntimes = 10;
+  printf("Small arrays:  %d elements\t\t(%.1lf KB)\n",
+    S_size, S_size*sizeof(double)*1.0E-3);
+
+  printf("Medium arrays: %d x %d elements\t(%.1lf MB)\n",
+    S_size, M_size, S_size*M_size*sizeof(double)*1.0E-6);
+
+  printf("Large arrays:  %d x %d x %d elements\t(%.1lf MB)\n",
+    S_size, M_size, L_size, S_size*M_size*L_size*sizeof(double)*1.0E-6);
+
+  /* Total memory moved */
+  const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
+  printf("Memory footprint: %.1lf MB\n", size);
+
+  printf("Running %d times\n", ntimes);
+
+  printf("\n");
+
   double timings[ntimes];
 
-  const double size = 8.0 * (2.0*L_size + 3.0*M_size + 3.0*S_size) * 1.0E-6;
 
-  /* The following assumes sizes are powers of 2 */
-  const unsigned int S_mask = S_size - 1;
-  const unsigned int M_mask = M_size - 1;
+  double *q = malloc(sizeof(double)*L_size*M_size*S_size);
+  double *r = malloc(sizeof(double)*L_size*M_size*S_size);
 
-  double *q = malloc(sizeof(double)*L_size);
-  double *r = malloc(sizeof(double)*L_size);
-
-  double *x = malloc(sizeof(double)*M_size);
-  double *y = malloc(sizeof(double)*M_size);
-  double *z = malloc(sizeof(double)*M_size);
+  double *x = malloc(sizeof(double)*M_size*S_size);
+  double *y = malloc(sizeof(double)*M_size*S_size);
+  double *z = malloc(sizeof(double)*M_size*S_size);
 
   double *a = malloc(sizeof(double)*S_size);
   double *b = malloc(sizeof(double)*S_size);
   double *c = malloc(sizeof(double)*S_size);
 
+  double *sum = malloc(sizeof(double)*L_size*M_size);
+
   /* Initalise the data */
   #pragma omp parallel
   {
     #pragma omp for
-    for (int i = 0; i < L_size; i++)
+    for (int k = 0; k < L_size; k++)
     {
-      q[i] = 0.1;
-      r[i] = 0.0;
+      for (int j = 0; j < M_size; j++)
+      {
+        for (int i = 0; i < S_size; i++)
+        {
+          q[IDX3(i,j,k,S_size,M_size)] = 0.1;
+          r[IDX3(i,j,k,S_size,M_size)] = 0.0;
+        }
+      }
     }
 
     #pragma omp for
-    for (int i = 0; i < M_size; i++)
+    for (int j = 0; j < M_size; j++)
     {
-      x[i] = 0.2;
-      y[i] = 0.3;
-      z[i] = 0.4;
+      for (int i = 0; i < S_size; i++)
+      {
+        x[IDX2(i,j,S_size)] = 0.2;
+        y[IDX2(i,j,S_size)] = 0.3;
+        z[IDX2(i,j,S_size)] = 0.4;
+      }
     }
 
     #pragma omp for
@@ -98,35 +144,83 @@ int main(int argc, char *argv[])
       c[i] = 0.8;
     }
 
-  }
-
-  #pragma omp target data map(to: a[0:S_size], b[0:S_size], c[0:S_size], x[0:M_size], y[0:M_size], z[0:M_size], q[0:L_size]) map(tofrom: r[0:L_size])
-  {
-
-    /* Run the kernel multiple times */
-    for (int t = 0; t < ntimes; t++)
+    #pragma omp for
+    for (int k = 0; k < L_size; k++)
     {
-      double tick = omp_get_wtime();
-      /* Kernel */
-      #pragma omp target teams distribute simd map(to: a[0:S_size], b[0:S_size], c[0:S_size], x[0:M_size], y[0:M_size], z[0:M_size], q[0:L_size], r[0:L_size])
-      for (int i = 0; i < L_size; i++)
+      for (int j = 0; j < M_size; j++)
       {
-        r[i] = q[i] + a[i&S_mask]*x[i&M_mask] + b[i&S_mask]*y[i&M_mask] + c[i&S_mask]*z[i&M_mask];
+        sum[IDX2(j,k,M_size)] = 0.0;
       }
-      double tock = omp_get_wtime();
-      timings[t] = tock-tick;
-  
     }
-  
   }
+
+  /* Run the kernel multiple times */
+#pragma omp target data \
+  map(tofrom: r[0:S_size*M_size*L_size]) \
+  map(to: q[0:S_size*M_size*L_size]) \
+  map(to: x[0:S_size*M_size], y[0:S_size*M_size], z[0:S_size*M_size]) \
+  map(to: a[0:S_size], b[0:S_size], c[0:S_size]) \
+  map(tofrom: sum[0:M_size*L_size])
+{
+  for (int t = 0; t < ntimes; t++)
+  {
+    double tick = omp_get_wtime();
+
+    /**************************************************************************
+     * Kernel
+     *************************************************************************/
+    #pragma omp target teams distribute collapse(2)
+    for (int k = 0; k < L_size; k++)
+    {
+      for (int j = 0; j < M_size; j++)
+      {
+        double total = 0.0;
+        #pragma omp parallel for simd reduction(+:total)
+        for (int i = 0; i < S_size; i++)
+        {
+          r[IDX3(i,j,k,S_size,M_size)] =
+            q[IDX3(i,j,k,S_size,M_size)]
+            + a[i] * x[IDX2(i,j,S_size)]
+            + b[i] * y[IDX2(i,j,S_size)]
+            + c[i] * z[IDX2(i,j,S_size)];
+
+          total += r[IDX3(i,j,k,S_size,M_size)];
+        }
+        sum[IDX2(j,k,M_size)] += total;
+      }
+    }
+cudaDeviceSynchronize();
+    double tock = omp_get_wtime();
+    timings[t] = tock-tick;
+
+  }
+}
 
   /* Check the results */
-  double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
-  for (int i = 0; i < L_size; i++)
+  const double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
+  const double gold_sum = gold*S_size*ntimes;
+
+  /* Check the r array */
+  for (int k = 0; k < L_size; k++)
+    for (int j = 0; j < M_size; j++)
+      for (int i = 0; i < S_size; i++)
+      {
+        if (fabs(r[IDX3(i,j,k,S_size,M_size)]-gold) > TOLR)
+        {
+          printf("Results incorrect - at (%d,%d,%d), %lf should be %lf\n",
+            i,j,k, r[IDX3(i,j,k,S_size,M_size)], gold);
+          goto sumcheck;
+        }
+      }
+
+sumcheck:
+  /* Check the reduction array */
+  for (int i = 0; i < L_size*M_size; i++)
   {
-    if (r[i] != gold)
+    if (fabs(sum[i]-gold_sum) > TOLR)
     {
-      printf("Results incorrect\n");
+      printf("Reduction incorrect - at %d, %lf should be %lf\n",
+        i, sum[i], gold_sum);
       break;
     }
   }
@@ -155,6 +249,7 @@ int main(int argc, char *argv[])
   free(a);
   free(b);
   free(c);
+  free(sum);
 
   return EXIT_SUCCESS;
 
@@ -166,36 +261,32 @@ void parse_args(int argc, char *argv[])
   {
     if (strcmp(argv[i], "--large") == 0)
     {
-      /* All arrays are large */
-      printf("Setting: Large\n");
-      M_size = LARGE;
-      S_size = LARGE;
+      L_size = atoi(argv[++i]);
     }
     else if (strcmp(argv[i], "--medium") == 0)
     {
-      /* Large arrays with only medium arrays */
-      printf("Setting: Medium\n");
-      S_size = MEDIUM;
+      M_size = atoi(argv[++i]);
     }
     else if (strcmp(argv[i], "--small") == 0)
     {
-      /* Large arrays with only small arrays */
-      printf("Setting: Small\n");
-      M_size = SMALL;
+      S_size = atoi(argv[++i]);
     }
-    else if (strcmp(argv[i], "--custom") == 0)
+    else if (strcmp(argv[i], "--ntimes") == 0)
     {
-      unsigned int size = atoi(argv[++i]);
-      printf("Setting: Custom - %d\n", size);
-      M_size = size;
-      S_size = size;
+      ntimes = atoi(argv[++i]);
+      if (ntimes < 2)
+      {
+        fprintf(stderr, "ntimes must be 2 or greater\n");
+        exit(EXIT_FAILURE);
+      }
     }
     else if (strcmp(argv[i], "--help") == 0)
     {
       printf("Usage: %s [OPTION]\n", argv[0]);
-      printf("\t --large\tMake all arrays large in size\n");
-      printf("\t --medium\t2 large arrays, and 6 medium arrays\n");
-      printf("\t --small\t2 large arrays, and 6 small arrays\n");
+      printf("\t --large n \tSet size of large dimension\n");
+      printf("\t --medium n \tSet size of medium dimension\n");
+      printf("\t --small n \tSet size of small dimension\n");
+      printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
       printf("\t Large  is %12d elements\n", LARGE);
       printf("\t Medium is %12d elements\n", MEDIUM);
