@@ -28,6 +28,7 @@
 
 #include <float.h>
 #include <omp.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +54,8 @@
 /* Default alignment of 2 MB page boundaries */
 #define ALIGNMENT 2*1024*1024
 
+/* Tollerance with which to check final array values */
+#define TOLR 1.0E-15
 
 void parse_args(int argc, char *argv[]);
 
@@ -166,11 +169,13 @@ int main(int argc, char *argv[])
   /* Check the results */
   const double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
   const double gold_sum = gold*S_size*ntimes;
+
+  /* Check the r array */
   for (int k = 0; k < L_size; k++)
     for (int j = 0; j < M_size; j++)
       for (int i = 0; i < S_size; i++)
       {
-        if (r[IDX3(i,j,k,S_size,M_size)] != gold)
+        if (fabs(r[IDX3(i,j,k,S_size,M_size)]-gold) > TOLR)
         {
           printf("Results incorrect - at (%d,%d,%d), %lf should be %lf\n",
             i,j,k, r[IDX3(i,j,k,S_size,M_size)], gold);
@@ -179,9 +184,10 @@ int main(int argc, char *argv[])
       }
 
 sumcheck:
+  /* Check the reduction array */
   for (int i = 0; i < L_size*M_size; i++)
   {
-    if (sum[i] != gold_sum)
+    if (fabs(sum[i]-gold_sum) > TOLR)
     {
       printf("Reduction incorrect - at %d, %lf should be %lf\n",
         i, sum[i], gold_sum);
