@@ -19,5 +19,3 @@ The benchmark should build with `make`, and by default uses the Intel compiler.
 This can be changed by specifying `CC`, for example `make CC=cc`.
 Additional options can be passed to the Makefile as `make OPTIONS=`.
 
-
-
