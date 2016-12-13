@@ -22,6 +22,10 @@
   bandwidth limits not to be reached, and latency becomes a dominating factor.
   We run a kernel with a similar form to the original triad, but with more than
   3 input arrays.
+
+  The main kernel computes:
+  r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
+  sum(j,k) = SUM(r(:,j,k,))
 */
 
 #define VERSION "0.2"
