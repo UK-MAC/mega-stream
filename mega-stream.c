@@ -85,11 +85,16 @@ int main(int argc, char *argv[])
   printf("Large arrays:  %d x %d x %d elements\t(%.1lf MB)\n",
     S_size, M_size, L_size, S_size*M_size*L_size*sizeof(double)*1.0E-6);
 
+  /* Total memory moved */
+  const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
+  printf("Memory footprint: %.1lf MB\n", size);
+
   printf("Running %d times\n", ntimes);
+
+  printf("\n");
 
   double timings[ntimes];
 
-  const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
 
   double *q = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size*S_size);
   double *r = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size*S_size);
