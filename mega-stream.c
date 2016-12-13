@@ -35,57 +35,65 @@
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
-#define LARGE   134217728// 2^27
-#define MEDIUM    8388608 // 2^23
-#define SMALL         128
+#define IDX2(i,j,ni) ((i)+(ni)*(j))
+#define IDX3(i,j,k,ni,nj) ((i)+(ni)*IDX2((j),(k),(nj)))
+
+/*
+  Arrays are defined in terms of 3 sizes
+  The large arrays are of size SMALL*MEDIUM*LARGE and are indexed with 3 indicies.
+  The medium arrays are of size SMALL*MEDIUM and are indexed with 2 indicies.
+  The small arrays are of size SMALL and are indexed with 1 index.
+
+  By default the large array has 2^27 elements, and the small array has 64 elements (2^6).
+*/
+#define LARGE  4096 // 2^12
+#define MEDIUM  512 // 2^9
+#define SMALL    64 // 2^6
 
 void parse_args(int argc, char *argv[]);
 
-unsigned int L_size = LARGE;
-unsigned int M_size = MEDIUM;
-unsigned int S_size = SMALL;
+int L_size = LARGE;
+int M_size = MEDIUM;
+int S_size = SMALL;
 
 int main(int argc, char *argv[])
 {
 
   printf("MEGA-STREAM! - v%s\n", VERSION);
 
+
   parse_args(argc, argv);
 
   const int ntimes = 10;
   double timings[ntimes];
 
-  const double size = 8.0 * (2.0*L_size + 3.0*M_size + 3.0*S_size) * 1.0E-6;
+  const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
 
-  /* The following assumes sizes are powers of 2 */
-  const unsigned int S_mask = S_size - 1;
-  const unsigned int M_mask = M_size - 1;
+  double *q = malloc(sizeof(double)*L_size*M_size*S_size);
+  double *r = malloc(sizeof(double)*L_size*M_size*S_size);
 
-  double *q = malloc(sizeof(double)*L_size);
-  double *r = malloc(sizeof(double)*L_size);
-
-  double *x = malloc(sizeof(double)*M_size);
-  double *y = malloc(sizeof(double)*M_size);
-  double *z = malloc(sizeof(double)*M_size);
+  double *x = malloc(sizeof(double)*M_size*S_size);
+  double *y = malloc(sizeof(double)*M_size*S_size);
+  double *z = malloc(sizeof(double)*M_size*S_size);
 
   double *a = malloc(sizeof(double)*S_size);
   double *b = malloc(sizeof(double)*S_size);
   double *c = malloc(sizeof(double)*S_size);
 
-  double *sum = malloc(sizeof(double)*L_size/S_size);
+  double *sum = malloc(sizeof(double)*L_size*M_size);
 
   /* Initalise the data */
   #pragma omp parallel
   {
     #pragma omp for
-    for (int i = 0; i < L_size; i++)
+    for (int i = 0; i < L_size*M_size*S_size; i++)
     {
       q[i] = 0.1;
       r[i] = 0.0;
     }
 
     #pragma omp for
-    for (int i = 0; i < M_size; i++)
+    for (int i = 0; i < M_size*S_size; i++)
     {
       x[i] = 0.2;
       y[i] = 0.3;
@@ -101,7 +109,7 @@ int main(int argc, char *argv[])
     }
 
     #pragma omp for
-    for (int i = 0; i < L_size/S_size; i++)
+    for (int i = 0; i < L_size*M_size; i++)
     {
       sum[i] = 0.0;
     }
@@ -113,16 +121,24 @@ int main(int argc, char *argv[])
     double tick = omp_get_wtime();
     /* Kernel */
     #pragma omp parallel for
-    for (int i = 0; i < L_size; i += S_size)
+    for (int k = 0; k < L_size; k++)
     {
-      double total = 0.0;
-#pragma omp simd reduction(+:total)
-      for (int j = 0; j < S_size; j++)
+      for (int j = 0; j < M_size; j++)
       {
-        r[i+j] = q[i+j] + a[j]*x[(i+j)&M_mask] + b[j]*y[(i+j)&M_mask] + c[j]*z[(i+j)&M_mask];
-        total += r[i+j];
+        double total = 0.0;
+        #pragma omp simd reduction(+:total)
+        for (int i = 0; i < S_size; i++)
+        {
+          r[IDX3(i,j,k,S_size,M_size)] =
+            q[IDX3(i,j,k,S_size,M_size)]
+            + a[k] * x[IDX2(i,j,S_size)]
+            + b[k] * y[IDX2(i,j,S_size)]
+            + c[k] * z[IDX2(i,j,S_size)];
+
+          total += r[IDX3(i,j,k,S_size,M_size)];
+        }
+        sum[IDX2(j,k,M_size)] += total;
       }
-      sum[i/S_size] += total;
     }
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
