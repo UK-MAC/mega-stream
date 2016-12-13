@@ -59,7 +59,7 @@ void parse_args(int argc, char *argv[]);
 int L_size = LARGE;
 int M_size = MEDIUM;
 int S_size = SMALL;
-int ntimes = 10;
+int ntimes = 100;
 
 int main(int argc, char *argv[])
 {
