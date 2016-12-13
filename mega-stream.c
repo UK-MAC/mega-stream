@@ -71,7 +71,7 @@ int ntimes = 100;
 int main(int argc, char *argv[])
 {
 
-  printf("MEGA-STREAM! - v%s\n", VERSION);
+  printf("MEGA-STREAM! - v%s\n\n", VERSION);
 
 
   parse_args(argc, argv);
