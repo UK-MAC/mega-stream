@@ -59,6 +59,7 @@ void parse_args(int argc, char *argv[]);
 int L_size = LARGE;
 int M_size = MEDIUM;
 int S_size = SMALL;
+int ntimes = 10;
 
 int main(int argc, char *argv[])
 {
@@ -68,7 +69,8 @@ int main(int argc, char *argv[])
 
   parse_args(argc, argv);
 
-  const int ntimes = 10;
+  printf("Running %d times\n", ntimes);
+
   double timings[ntimes];
 
   const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
@@ -220,12 +222,17 @@ void parse_args(int argc, char *argv[])
       M_size = size;
       S_size = size;
     }
+    else if (strcmp(argv[i], "--ntimes") == 0)
+    {
+      ntimes = atoi(argv[++i]);
+    }
     else if (strcmp(argv[i], "--help") == 0)
     {
       printf("Usage: %s [OPTION]\n", argv[0]);
       printf("\t --large\tMake all arrays large in size\n");
       printf("\t --medium\t2 large arrays, and 6 medium arrays\n");
       printf("\t --small\t2 large arrays, and 6 small arrays\n");
+      printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
       printf("\t Large  is %12d elements\n", LARGE);
       printf("\t Medium is %12d elements\n", MEDIUM);
