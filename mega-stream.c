@@ -237,6 +237,11 @@ void parse_args(int argc, char *argv[])
     else if (strcmp(argv[i], "--ntimes") == 0)
     {
       ntimes = atoi(argv[++i]);
+      if (ntimes < 2)
+      {
+        fprintf(stderr, "ntimes must be 2 or greater\n");
+        exit(EXIT_FAILURE);
+      }
     }
     else if (strcmp(argv[i], "--help") == 0)
     {
