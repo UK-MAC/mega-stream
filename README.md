@@ -12,7 +12,9 @@ The main kernel consists of 8 arrays with the following properties:
  * x, y and z are medium
  * a, c and c are small
 
-```r[i] = q[i] + a[i%S]*x[i%M] + b[i%S]*y[i%M] + c[i%S]*z[i%M]```
+```
+r[i] = q[i] + a[i%S]*x[i%M] + b[i%S]*y[i%M] + c[i%S]*z[i%M]
+```
 
 ## Building
 The benchmark should build with `make`, and by default uses the Intel compiler.
