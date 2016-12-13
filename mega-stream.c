@@ -51,7 +51,7 @@
 #define SMALL    64 // 2^6
 
 /* Default alignment of 2 MB page boundaries */
-#define ALIGN 2*1024*1024
+#define ALIGNMENT 2*1024*1024
 
 
 void parse_args(int argc, char *argv[]);
@@ -73,18 +73,18 @@ int main(int argc, char *argv[])
 
   const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
 
-  double *q = aligned_alloc(ALIGN, sizeof(double)*L_size*M_size*S_size);
-  double *r = aligned_alloc(ALIGN, sizeof(double)*L_size*M_size*S_size);
+  double *q = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size*S_size);
+  double *r = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size*S_size);
 
-  double *x = aligned_alloc(ALIGN, sizeof(double)*M_size*S_size);
-  double *y = aligned_alloc(ALIGN, sizeof(double)*M_size*S_size);
-  double *z = aligned_alloc(ALIGN, sizeof(double)*M_size*S_size);
+  double *x = aligned_alloc(ALIGNMENT, sizeof(double)*M_size*S_size);
+  double *y = aligned_alloc(ALIGNMENT, sizeof(double)*M_size*S_size);
+  double *z = aligned_alloc(ALIGNMENT, sizeof(double)*M_size*S_size);
 
-  double *a = aligned_alloc(ALIGN, sizeof(double)*S_size);
-  double *b = aligned_alloc(ALIGN, sizeof(double)*S_size);
-  double *c = aligned_alloc(ALIGN, sizeof(double)*S_size);
+  double *a = aligned_alloc(ALIGNMENT, sizeof(double)*S_size);
+  double *b = aligned_alloc(ALIGNMENT, sizeof(double)*S_size);
+  double *c = aligned_alloc(ALIGNMENT, sizeof(double)*S_size);
 
-  double *sum = aligned_alloc(ALIGN, sizeof(double)*L_size*M_size);
+  double *sum = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size);
 
   /* Initalise the data */
   #pragma omp parallel
