@@ -92,18 +92,27 @@ int main(int argc, char *argv[])
   #pragma omp parallel
   {
     #pragma omp for
-    for (int i = 0; i < L_size*M_size*S_size; i++)
+    for (int k = 0; k < L_size; k++)
     {
-      q[i] = 0.1;
-      r[i] = 0.0;
+      for (int j = 0; j < M_size; j++)
+      {
+        for (int i = 0; i < S_size; i++)
+        {
+          q[IDX3(i,j,k,S_size,M_size)] = 0.1;
+          r[IDX3(i,j,k,S_size,M_size)] = 0.0;
+        }
+      }
     }
 
     #pragma omp for
-    for (int i = 0; i < M_size*S_size; i++)
+    for (int j = 0; j < M_size; j++)
     {
-      x[i] = 0.2;
-      y[i] = 0.3;
-      z[i] = 0.4;
+      for (int i = 0; i < S_size; i++)
+      {
+        x[IDX2(i,j,S_size)] = 0.2;
+        y[IDX2(i,j,S_size)] = 0.3;
+        z[IDX2(i,j,S_size)] = 0.4;
+      }
     }
 
     #pragma omp for
@@ -115,9 +124,12 @@ int main(int argc, char *argv[])
     }
 
     #pragma omp for
-    for (int i = 0; i < L_size*M_size; i++)
+    for (int k = 0; k < L_size; k++)
     {
-      sum[i] = 0.0;
+      for (int j = 0; j < M_size; j++)
+      {
+        sum[IDX2(j,k,M_size)] = 0.0;
+      }
     }
   }
 
