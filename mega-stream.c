@@ -76,6 +76,15 @@ int main(int argc, char *argv[])
 
   parse_args(argc, argv);
 
+  printf("Small arrays:  %d elements\t\t(%.1lf KB)\n",
+    S_size, S_size*sizeof(double)*1.0E-3);
+
+  printf("Medium arrays: %d x %d elements\t(%.1lf MB)\n",
+    S_size, M_size, S_size*M_size*sizeof(double)*1.0E-6);
+
+  printf("Large arrays:  %d x %d x %d elements\t(%.1lf MB)\n",
+    S_size, M_size, L_size, S_size*M_size*L_size*sizeof(double)*1.0E-6);
+
   printf("Running %d times\n", ntimes);
 
   double timings[ntimes];
