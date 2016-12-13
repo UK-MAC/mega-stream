@@ -40,4 +40,4 @@ mega-stream-ftn: mega-stream.f90
 .PHONY: clean
 
 clean:
-	rm -f mega-stream
+	rm -f mega-stream mega-stream-omp4 mega-stream-ftn
