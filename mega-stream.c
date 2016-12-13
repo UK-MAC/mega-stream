@@ -149,9 +149,9 @@ int main(int argc, char *argv[])
         {
           r[IDX3(i,j,k,S_size,M_size)] =
             q[IDX3(i,j,k,S_size,M_size)]
-            + a[k] * x[IDX2(i,j,S_size)]
-            + b[k] * y[IDX2(i,j,S_size)]
-            + c[k] * z[IDX2(i,j,S_size)];
+            + a[i] * x[IDX2(i,j,S_size)]
+            + b[i] * y[IDX2(i,j,S_size)]
+            + c[i] * z[IDX2(i,j,S_size)];
 
           total += r[IDX3(i,j,k,S_size,M_size)];
         }
