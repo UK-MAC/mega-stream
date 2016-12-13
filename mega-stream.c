@@ -144,7 +144,10 @@ int main(int argc, char *argv[])
   for (int t = 0; t < ntimes; t++)
   {
     double tick = omp_get_wtime();
-    /* Kernel */
+
+    /**************************************************************************
+     * Kernel
+     *************************************************************************/
     #pragma omp parallel for
     for (int k = 0; k < L_size; k++)
     {
