@@ -271,6 +271,12 @@ void parse_args(int argc, char *argv[])
     {
       S_size = atoi(argv[++i]);
     }
+    else if (strcmp(argv[i], "--swap") == 0)
+    {
+      int tmp = L_size;
+      L_size = M_size;
+      M_size = tmp;
+    }
     else if (strcmp(argv[i], "--ntimes") == 0)
     {
       ntimes = atoi(argv[++i]);
@@ -286,6 +292,7 @@ void parse_args(int argc, char *argv[])
       printf("\t --large n \tSet size of large dimension\n");
       printf("\t --medium n \tSet size of medium dimension\n");
       printf("\t --small n \tSet size of small dimension\n");
+      printf("\t --swap\tSwap medium and large sizes over\n");
       printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
       printf("\t Large  is %12d elements\n", LARGE);
