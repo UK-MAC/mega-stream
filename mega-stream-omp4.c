@@ -28,7 +28,7 @@
   sum(j,k) = SUM(r(:,j,k,))
 */
 
-#define VERSION "0.2"
+#define VERSION "0.2.1"
 
 #include <float.h>
 #include <omp.h>
@@ -85,9 +85,16 @@ int main(int argc, char *argv[])
   printf("Large arrays:  %d x %d x %d elements\t(%.1lf MB)\n",
     S_size, M_size, L_size, S_size*M_size*L_size*sizeof(double)*1.0E-6);
 
-  /* Total memory moved */
-  const double size = (double)sizeof(double) * (2.0*L_size*M_size*S_size + 3.0*M_size*S_size + 3.0*S_size) * 1.0E-6;
-  printf("Memory footprint: %.1lf MB\n", size);
+  const double footprint = (double)sizeof(double) * 1.0E-6 * (
+    2.0*L_size*M_size*S_size +   /* r, q */
+    3.0*M_size*S_size +          /* x, y, z */
+    3.0*S_size +                 /* a, b, c */
+    L_size*M_size                /* sum */
+    );
+  printf("Memory footprint: %.1lf MB\n", footprint);
+
+  /* Total memory moved - the arrays plus an extra sum as update is += */
+  const double size = footprint + (double)sizeof(double) * L_size*M_size * 1.0E-6;
 
   printf("Running %d times\n", ntimes);
 
