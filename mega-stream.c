@@ -28,7 +28,7 @@
   sum(j,k) = SUM(r(:,j,k))
 */
 
-#define VERSION "0.2"
+#define VERSION "0.2.1"
 
 #include <float.h>
 #include <omp.h>
