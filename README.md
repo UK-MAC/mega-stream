@@ -26,6 +26,5 @@ This can be changed by specifying `CC`, for example `make CC=cc`.
 Additional options can be passed to the Makefile as `make OPTIONS=`.
 
 ## Notes
-The Fortran version is currently only v0.1, and does not implement the updated
-version which includes the reduction.
+The Fortran version does not have any command line argument checking.
 
