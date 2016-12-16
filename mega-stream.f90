@@ -152,7 +152,7 @@ PROGRAM megastream
     DO k = 1, L_size
      DO j = 1, M_size
         tmp = 0.0_8
-        !$OMP SIMD REDUCTION(+:tmp)
+        !$OMP SIMD REDUCTION(+:tmp) ALIGNED(r,q,x,y,z,a,b,c: 64)
         DO i = 1, S_size
           r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
           tmp = tmp + r(i,j,k)
