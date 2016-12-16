@@ -35,7 +35,7 @@ mega-stream-omp4: mega-stream-omp4.c
 	cc -hstd=c99 -O3 $^ -o $@
 
 mega-stream-ftn: mega-stream.f90
-	$(FTN) $(FFLAGS) $(OMP) $^ -o $@
+	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
 .PHONY: clean
 
