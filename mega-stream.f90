@@ -43,9 +43,9 @@ PROGRAM megastream
 !  By default the large array has 2^27 elements, and the small array has 64 elements (2^6).
 !
 
-  INTEGER :: L_size = 4096 ! 2^12
-  INTEGER :: M_size =  512 ! 2^9
-  INTEGER :: S_size =   64 ! 2^6
+  INTEGER, PARAMETER :: L_size = 4096 ! 2^12
+  INTEGER, PARAMETER :: M_size =  512 ! 2^9
+  INTEGER, PARAMETER :: S_size =   64 ! 2^6
   REAL(8), DIMENSION(:,:,:), ALLOCATABLE :: q, r
   REAL(8), DIMENSION(:,:), ALLOCATABLE :: x, y, z
   REAL(8), DIMENSION(:), ALLOCATABLE :: a, b, c
@@ -145,22 +145,7 @@ PROGRAM megastream
   DO t = 1, ntimes
     tick = omp_get_wtime()
 
-!**************************************************************************
-!* Kernel
-!*************************************************************************/
-!$OMP PARALLEL DO PRIVATE(tmp)
-    DO k = 1, L_size
-     DO j = 1, M_size
-        tmp = 0.0_8
-        !$OMP SIMD REDUCTION(+:tmp) ALIGNED(r,q,x,y,z,a,b,c: 64)
-        DO i = 1, S_size
-          r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
-          tmp = tmp + r(i,j,k)
-        END DO ! i
-        total(j,k) = total(j,k) + tmp
-      END DO ! j
-    END DO ! k
-!$OMP END PARALLEL DO
+    CALL kernel(S_size, M_size, L_size, q, r, x, y, z, a, b, c, total)
 
     tock = omp_get_wtime()
     timings(t) = tock-tick
@@ -194,4 +179,36 @@ PROGRAM megastream
   DEALLOCATE(timings)
 
 END PROGRAM megastream
+
+!**************************************************************************
+!* Kernel
+!*************************************************************************/
+SUBROUTINE kernel(S_size, M_size, L_size, q, r, x, y, z, a, b, c, total)
+
+  IMPLICIT NONE
+  
+  INTEGER :: S_size, M_size, L_size
+  REAL(8), DIMENSION(S_size, M_size, L_size) :: q, r
+  REAL(8), DIMENSION(S_size, M_size) :: x, y, z
+  REAL(8), DIMENSION(S_size) :: a, b, c
+  REAL(8), DIMENSION(M_size, L_size) :: total
+
+  INTEGER :: i, j, k
+  REAL(8) :: tmp
+
+!$OMP PARALLEL DO PRIVATE(tmp)
+    DO k = 1, L_size
+     DO j = 1, M_size
+        tmp = 0.0_8
+        !$OMP SIMD REDUCTION(+:tmp) ALIGNED(r,q,x,y,z,a,b,c: 64)
+        DO i = 1, S_size
+          r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
+          tmp = tmp + r(i,j,k)
+        END DO ! i
+        total(j,k) = total(j,k) + tmp
+      END DO ! j
+    END DO ! k
+!$OMP END PARALLEL DO
+
+END SUBROUTINE kernel
 
