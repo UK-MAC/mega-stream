@@ -195,44 +195,26 @@ int main(int argc, char *argv[])
   } /* End of parallel region */
 
   /* Run the kernel multiple times */
-  for (int t = 0; t < ntimes; t++)
-  {
+  for (int t = 0; t < ntimes; t++) {
     double tick = omp_get_wtime();
 
-    /**************************************************************************
-     * Kernel
-     *************************************************************************/
-    #pragma omp parallel for
-    for (int k = 0; k < L_size; k++)
-    {
-      for (int j = 0; j < M_size; j++)
-      {
-        double total = 0.0;
-        #pragma omp simd reduction(+:total) aligned(r,q,a,b,c,x,y,z: ALIGNMENT)
-        for (int i = 0; i < S_size; i++)
-        {
-          r[IDX3(i,j,k,S_size,M_size)] =
-            q[IDX3(i,j,k,S_size,M_size)]
-            + a[i] * x[IDX2(i,j,S_size)]
-            + b[i] * y[IDX2(i,j,S_size)]
-            + c[i] * z[IDX2(i,j,S_size)];
+    kernel(Ni,Nj,Nk,Nl,Nm,r,q,x,y,z,a,b,c,sum);
 
-          total += r[IDX3(i,j,k,S_size,M_size)];
-        }
-        sum[IDX2(j,k,M_size)] += total;
-      }
-    }
+    /* Swap the pointers */
+    double *tmp = q; q = r; r = tmp;
+
     double tock = omp_get_wtime();
     timings[t] = tock-tick;
 
   }
 
   /* Check the results */
+  /* TODO */
   const double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
   const double gold_sum = gold*S_size*ntimes;
 
   /* Check the r array */
-  for (int k = 0; k < L_size; k++)
+  /*for (int k = 0; k < L_size; k++)
     for (int j = 0; j < M_size; j++)
       for (int i = 0; i < S_size; i++)
       {
@@ -243,10 +225,10 @@ int main(int argc, char *argv[])
           goto sumcheck;
         }
       }
-
+*/
 sumcheck:
   /* Check the reduction array */
-  for (int i = 0; i < L_size*M_size; i++)
+ /* for (int i = 0; i < L_size*M_size; i++)
   {
     if (fabs(sum[i]-gold_sum) > TOLR)
     {
@@ -255,13 +237,13 @@ sumcheck:
       break;
     }
   }
+*/
 
   /* Print timings */
   double min = DBL_MAX;
   double max = 0.0;
   double avg = 0.0;
-  for (int t = 1; t < ntimes; t++)
-  {
+  for (int t = 1; t < ntimes; t++) {
     min = MIN(min, timings[t]);
     max = MAX(max, timings[t]);
     avg += timings[t];
@@ -285,6 +267,56 @@ sumcheck:
   return EXIT_SUCCESS;
 
 }
+
+/**************************************************************************
+ * Kernel
+ *************************************************************************/
+void kernel(
+  const int Ni, const int Nj, const int Nk, const int Nl, const int Nm,
+  double * restrict r,
+  const double * restrict q,
+  double * restrict x,
+  double * restrict y,
+  double * restrict z,
+  const double * restrict a,
+  const double * restrict b,
+  const double * restrict c,
+  double * restrict sum
+  )
+{
+  #pragma omp parallel for
+  for (int m = 0; m < Nm; m++) {
+    for (int l = 0; l < Nl; l++) {
+      for (int k = 0; k < Nk; k++) {
+        for (int j = 0; j < Nj; j++) {
+          double total = 0.0;
+          #pragma omp simd reduction(+:total)
+          for (int i = 0; i < Ni; i++) {
+            /* Set r */
+            r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] =
+              q[IDX5(i,j,k,l,lm,Ni,Nj,Nk)] +
+              a[i] * x[IDX4(i,j,k,m,Ni,Nj,Nk)] +
+              b[i] * y[IDX4(i,j,l,m,Ni,Nj,Nl)] +
+              c[i] * z[IDX4(i,k,l,m,Ni,Nk,Nl)];
+
+            /* Update x, y and z */
+            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 2.0*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - x[IDX4(i,j,k,m,Ni,Nj,Nk)];
+            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 2.0*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - y[IDX4(i,j,l,m,Ni,Nj,Nl)];
+            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 2.0*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - z[IDX4(i,k,l,m,Ni,Nk,Nl)];
+
+            /* Reduce over Ni */
+            total += r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)];
+
+          } /* Ni */
+
+          sum[IDX4(j,k,l,m,Nj,Nk,Nl)] += total;
+
+        } /* Nj */
+      } /* Nk */
+    } /* Nl */
+  } /* Nm */
+}
+
 
 void parse_args(int argc, char *argv[])
 {
