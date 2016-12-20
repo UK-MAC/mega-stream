@@ -78,19 +78,21 @@ int main(int argc, char *argv[])
   parse_args(argc, argv);
 
   printf("Small arrays:  %d elements\t\t(%.1lf KB)\n",
-    S_size, S_size*sizeof(double)*1.0E-3);
+    Ni, Ni*sizeof(double)*1.0E-3);
 
-  printf("Medium arrays: %d x %d elements\t(%.1lf MB)\n",
-    S_size, M_size, S_size*M_size*sizeof(double)*1.0E-6);
+  printf("Medium arrays: %d x %d x %d x %d elements\t(%.1lf MB)\n",
+    Ni, Nj, Nj, Nm, Ni*Nj*Nj*Nm*sizeof(double)*1.0E-6);
 
-  printf("Large arrays:  %d x %d x %d elements\t(%.1lf MB)\n",
-    S_size, M_size, L_size, S_size*M_size*L_size*sizeof(double)*1.0E-6);
+  printf("Large arrays:  %d x %d x %d x %d x %d elements\t(%.1lf MB)\n",
+    Ni, Nj, Nj, Nj, Nm, Ni*Nj*Nj*Nj*Nm*sizeof(double)*1.0E-6);
 
   const double footprint = (double)sizeof(double) * 1.0E-6 * (
-    2.0*L_size*M_size*S_size +   /* r, q */
-    3.0*M_size*S_size +          /* x, y, z */
-    3.0*S_size +                 /* a, b, c */
-    L_size*M_size                /* sum */
+    2.0*Ni*Nj*Nk*Nl*Nm +  /* r, q */
+    Ni*Nj*Nk*Nm +         /* x */
+    Ni*Nj*Nl*Nm +         /* y */
+    Ni*Nk*Nl*Nm +         /* z */
+    3.0*Ni +              /* a, b, c */
+    Nj*Nk*Nl*Nm           /* sum */
     );
   printf("Memory footprint: %.1lf MB\n", footprint);
 
@@ -104,63 +106,93 @@ int main(int argc, char *argv[])
   double timings[ntimes];
 
 
-  double *q = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size*S_size);
-  double *r = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size*S_size);
+  double *q = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
+  double *r = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
 
-  double *x = aligned_alloc(ALIGNMENT, sizeof(double)*M_size*S_size);
-  double *y = aligned_alloc(ALIGNMENT, sizeof(double)*M_size*S_size);
-  double *z = aligned_alloc(ALIGNMENT, sizeof(double)*M_size*S_size);
+  double *x = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nm);
+  double *y = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nl*Nm);
+  double *z = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nk*Nl*Nm);
 
-  double *a = aligned_alloc(ALIGNMENT, sizeof(double)*S_size);
-  double *b = aligned_alloc(ALIGNMENT, sizeof(double)*S_size);
-  double *c = aligned_alloc(ALIGNMENT, sizeof(double)*S_size);
+  double *a = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
+  double *b = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
+  double *c = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
 
-  double *sum = aligned_alloc(ALIGNMENT, sizeof(double)*L_size*M_size);
+  double *sum = aligned_alloc(ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
 
   /* Initalise the data */
   #pragma omp parallel
   {
+    /* q and r */
     #pragma omp for
-    for (int k = 0; k < L_size; k++)
-    {
-      for (int j = 0; j < M_size; j++)
-      {
-        for (int i = 0; i < S_size; i++)
-        {
-          q[IDX3(i,j,k,S_size,M_size)] = 0.1;
-          r[IDX3(i,j,k,S_size,M_size)] = 0.0;
+    for (int m = 0; m < Nm; m++) {
+      for (int l = 0; l < Nl; l++) {
+        for (int k = 0; k < Nk; k++) {
+          for (int j = 0; j < Nj; j++) {
+            for (int i = 0; i < Ni; i++) {
+              q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = 0.1;
+              r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = 0.0;
+            }
+          }
         }
       }
     }
 
+    /* x */
     #pragma omp for
-    for (int j = 0; j < M_size; j++)
-    {
-      for (int i = 0; i < S_size; i++)
-      {
-        x[IDX2(i,j,S_size)] = 0.2;
-        y[IDX2(i,j,S_size)] = 0.3;
-        z[IDX2(i,j,S_size)] = 0.4;
+    for (int m = 0; m < Nm; m++) {
+      for (int k = 0; k < Nk; k++) {
+        for (int j = 0; j < Nj; j++) {
+          for (int i = 0; i < Ni; i++) {
+            x[IDX4(i,j,k,m,Ni,Nj,Nk,Nm)] = 0.2;
+          }
+        }
       }
     }
 
+    /* y */
     #pragma omp for
-    for (int i = 0; i < S_size; i++)
-    {
+    for (int m = 0; m < Nm; m++) {
+      for (int l = 0; l < Nl; l++) {
+        for (int j = 0; j < Nj; j++) {
+          for (int i = 0; i < Ni; i++) {
+            y[IDX4(i,j,l,m,Ni,Nj,Nl,Nm)] = 0.3;
+          }
+        }
+      }
+    }
+
+    /* z */
+    #pragma omp for
+    for (int m = 0; m < Nm; m++) {
+      for (int l = 0; l < Nl; l++) {
+        for (int k = 0; k < Nk; k++) {
+          for (int i = 0; i < Ni; i++) {
+            z[IDX4(i,k,l,m,Ni,Nk,Nl,Nm)] = 0.4;
+          }
+        }
+      }
+    }
+
+    /* a, b, and c */
+    #pragma omp for
+    for (int i = 0; i < Ni; i++) {
       a[i] = 0.6;
       b[i] = 0.7;
       c[i] = 0.8;
     }
 
+    /* sum */
     #pragma omp for
-    for (int k = 0; k < L_size; k++)
-    {
-      for (int j = 0; j < M_size; j++)
-      {
-        sum[IDX2(j,k,M_size)] = 0.0;
+    for (int m = 0; m < Nm; m++) {
+      for (int l = 0; l < Nl; l++) {
+        for (int k = 0; k < Nk; k++) {
+          for (int j = 0; j < Nj; j++) {
+            sum[IDX4(j,k,l,m,Nj,Nk,Nl)] = 0.0;
+          }
+        }
       }
     }
-  }
+  } /* End of parallel region */
 
   /* Run the kernel multiple times */
   for (int t = 0; t < ntimes; t++)
