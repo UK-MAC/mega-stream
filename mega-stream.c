@@ -37,18 +37,19 @@
 
 #define IDX2(i,j,ni) ((i)+(ni)*(j))
 #define IDX3(i,j,k,ni,nj) ((i)+(ni)*IDX2((j),(k),(nj)))
+#define IDX4(i,j,k,l,ni,nj,nk) ((i)+(ni)*IDX3((j),(k),(l),(nj),(nk)))
+#define IDX5(i,j,k,l,m,ni,nj,nk,nl) ((i)+(ni)*IDX4((j),(k),(l),(m),(nj),(nk),(nl)))
 
 /*
-  Arrays are defined in terms of 3 sizes
-  The large arrays are of size SMALL*MEDIUM*LARGE and are indexed with 3 indicies.
-  The medium arrays are of size SMALL*MEDIUM and are indexed with 2 indicies.
-  The small arrays are of size SMALL and are indexed with 1 index.
+  Arrays are defined in terms of 3 sizes: inner, middle and outer.
+  The large arrays are of size inner*middle*middle*middle*outer.
+  The medium arrays are of size inner*middle*middle*outer.
+  The small arrays are of size inner and are indexed with 1 index.
 
-  By default the large array has 2^27 elements, and the small array has 64 elements (2^6).
 */
-#define LARGE  4096 // 2^12
-#define MEDIUM  512 // 2^9
-#define SMALL    64 // 2^6
+#define OUTER   32 // 2^5
+#define MIDDLE   8 // 2^3
+#define INNER  128 // 2^7
 
 /* Default alignment of 2 MB page boundaries */
 #define ALIGNMENT 2*1024*1024
@@ -58,9 +59,14 @@
 
 void parse_args(int argc, char *argv[]);
 
-int L_size = LARGE;
-int M_size = MEDIUM;
-int S_size = SMALL;
+/* Default strides */
+int Ni = INNER;
+int Nj = MIDDLE;
+int Nk = MIDDLE;
+int Nl = MIDDLE;
+int Nm = OUTER;
+
+/* Number of iterations to run benchmark */
 int ntimes = 100;
 
 int main(int argc, char *argv[])
