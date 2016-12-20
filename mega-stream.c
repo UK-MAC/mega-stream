@@ -18,17 +18,12 @@
   along with mega-stream.  If not, see <http://www.gnu.org/licenses/>.
 
 
-  This aims to test the theory that streaming many large arrays causes memory
-  bandwidth limits not to be reached, and latency becomes a dominating factor.
-  We run a kernel with a similar form to the original triad, but with more than
-  3 input arrays.
+  This aims to investigate the limiting factor for a simple kernel, in particular
+  where bandwidth limits not to be reached, and latency becomes a dominating factor.
 
-  The main kernel computes:
-  r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
-  sum(j,k) = SUM(r(:,j,k))
 */
 
-#define VERSION "0.2.1"
+#define VERSION "0.3"
 
 #include <float.h>
 #include <omp.h>
