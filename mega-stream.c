@@ -338,9 +338,9 @@ void kernel(
               c[i] * z[IDX4(i,k,l,m,Ni,Nk,Nl)];
 
             /* Update x, y and z */
-            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 2.0*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - x[IDX4(i,j,k,m,Ni,Nj,Nk)];
-            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 2.0*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - y[IDX4(i,j,l,m,Ni,Nj,Nl)];
-            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 2.0*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - z[IDX4(i,k,l,m,Ni,Nk,Nl)];
+            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 0.2*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - x[IDX4(i,j,k,m,Ni,Nj,Nk)];
+            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 0.2*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - y[IDX4(i,j,l,m,Ni,Nj,Nl)];
+            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 0.2*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - z[IDX4(i,k,l,m,Ni,Nk,Nl)];
 
             /* Reduce over Ni */
             total += r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)];
