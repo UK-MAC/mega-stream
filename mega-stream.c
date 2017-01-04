@@ -97,7 +97,15 @@ int main(int argc, char *argv[])
   printf("Memory footprint: %.1lf MB\n", footprint);
 
   /* Total memory moved - the arrays plus an extra sum as update is += */
-  const double size = footprint + (double)sizeof(double) * L_size*M_size * 1.0E-6;
+  const double moved = (double)sizeof(double) * 1.0E-6 * (
+    Ni*Nj*Nk*Nl*Nm  + /* read q */
+    Ni*Nj*Nk*Nl*Nm  + /* write r */
+    Ni + Ni + Ni    + /* read a, b and c */
+    2.0*Ni*Nj*Nk*Nm + /* read and write x */
+    2.0*Ni*Nj*Nl*Nm + /* read and write y */
+    2.0*Ni*Nk*Nl*Nm + /* read and write z */
+    2.0*Nj*Nk*Nl*Nm   /* read and write sum */
+  );
 
   printf("Running %d times\n", ntimes);
 
@@ -251,7 +259,7 @@ sumcheck:
   avg /= (double)(ntimes - 1);
 
   printf("Bandwidth MB/s  Min time    Max time    Avg time\n");
-  printf("%12.1f %11.6f %11.6f %11.6f\n", size/min, min, max, avg);
+  printf("%12.1f %11.6f %11.6f %11.6f\n", moved/min, min, max, avg);
 
   /* Free memory */
   free(q);
