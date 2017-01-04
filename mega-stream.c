@@ -120,7 +120,29 @@ int main(int argc, char *argv[])
 
   double timings[ntimes];
 
+#ifdef __APPLE__
+  double *q;
+  posix_memalign(&q, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
+  double *r;
+  posix_memalign(&r, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
 
+  double *x;
+  posix_memalign(&x, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nm);
+  double *y;
+  posix_memalign(&y, ALIGNMENT, sizeof(double)*Ni*Nj*Nl*Nm);
+  double *z;
+  posix_memalign(&z, ALIGNMENT, sizeof(double)*Ni*Nk*Nl*Nm);
+
+  double *a;
+  posix_memalign(&a, ALIGNMENT, sizeof(double)*Ni);
+  double *b;
+  posix_memalign(&b, ALIGNMENT, sizeof(double)*Ni);
+  double *c;
+  posix_memalign(&c, ALIGNMENT, sizeof(double)*Ni);
+
+  double *sum;
+  posix_memalign(&sum, ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
+#else
   double *q = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
   double *r = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
 
@@ -133,6 +155,7 @@ int main(int argc, char *argv[])
   double *c = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
 
   double *sum = aligned_alloc(ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
+#endif
 
   /* Initalise the data */
   #pragma omp parallel
