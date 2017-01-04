@@ -57,6 +57,13 @@
 /* Tollerance with which to check final array values */
 #define TOLR 1.0E-15
 
+void kernel(
+  const int Ni, const int Nj, const int Nk, const int Nl, const int Nm,
+  double * restrict r, const double * restrict q,
+  double * restrict x, double * restrict y, double * restrict z,
+  const double * restrict a, const double * restrict b, const double * restrict c,
+  double * restrict sum
+);
 void parse_args(int argc, char *argv[]);
 
 /* Default strides */
@@ -151,7 +158,7 @@ int main(int argc, char *argv[])
       for (int k = 0; k < Nk; k++) {
         for (int j = 0; j < Nj; j++) {
           for (int i = 0; i < Ni; i++) {
-            x[IDX4(i,j,k,m,Ni,Nj,Nk,Nm)] = 0.2;
+            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 0.2;
           }
         }
       }
@@ -163,7 +170,7 @@ int main(int argc, char *argv[])
       for (int l = 0; l < Nl; l++) {
         for (int j = 0; j < Nj; j++) {
           for (int i = 0; i < Ni; i++) {
-            y[IDX4(i,j,l,m,Ni,Nj,Nl,Nm)] = 0.3;
+            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 0.3;
           }
         }
       }
@@ -175,7 +182,7 @@ int main(int argc, char *argv[])
       for (int l = 0; l < Nl; l++) {
         for (int k = 0; k < Nk; k++) {
           for (int i = 0; i < Ni; i++) {
-            z[IDX4(i,k,l,m,Ni,Nk,Nl,Nm)] = 0.4;
+            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 0.4;
           }
         }
       }
@@ -218,8 +225,8 @@ int main(int argc, char *argv[])
 
   /* Check the results */
   /* TODO */
-  const double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
-  const double gold_sum = gold*S_size*ntimes;
+  //const double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
+  //const double gold_sum = gold*S_size*ntimes;
 
   /* Check the r array */
   /*for (int k = 0; k < L_size; k++)
@@ -234,7 +241,7 @@ int main(int argc, char *argv[])
         }
       }
 */
-sumcheck:
+//sumcheck:
   /* Check the reduction array */
  /* for (int i = 0; i < L_size*M_size; i++)
   {
@@ -302,7 +309,7 @@ void kernel(
           for (int i = 0; i < Ni; i++) {
             /* Set r */
             r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] =
-              q[IDX5(i,j,k,l,lm,Ni,Nj,Nk)] +
+              q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] +
               a[i] * x[IDX4(i,j,k,m,Ni,Nj,Nk)] +
               b[i] * y[IDX4(i,j,l,m,Ni,Nj,Nl)] +
               c[i] * z[IDX4(i,k,l,m,Ni,Nk,Nl)];
@@ -330,23 +337,20 @@ void parse_args(int argc, char *argv[])
 {
   for (int i = 1; i < argc; i++)
   {
-    if (strcmp(argv[i], "--large") == 0)
+    if (strcmp(argv[i], "--outer") == 0)
     {
-      L_size = atoi(argv[++i]);
+      Nm = atoi(argv[++i]);
     }
-    else if (strcmp(argv[i], "--medium") == 0)
+    else if (strcmp(argv[i], "--inner") == 0)
     {
-      M_size = atoi(argv[++i]);
+      Ni = atoi(argv[++i]);
     }
-    else if (strcmp(argv[i], "--small") == 0)
+    else if (strcmp(argv[i], "--middle") == 0)
     {
-      S_size = atoi(argv[++i]);
-    }
-    else if (strcmp(argv[i], "--swap") == 0)
-    {
-      int tmp = L_size;
-      L_size = M_size;
-      M_size = tmp;
+      int num = atoi(argv[++i]);
+      Nj = num;
+      Nk = num;
+      Nl = num;
     }
     else if (strcmp(argv[i], "--ntimes") == 0)
     {
@@ -360,15 +364,14 @@ void parse_args(int argc, char *argv[])
     else if (strcmp(argv[i], "--help") == 0)
     {
       printf("Usage: %s [OPTION]\n", argv[0]);
-      printf("\t --large n \tSet size of large dimension\n");
-      printf("\t --medium n \tSet size of medium dimension\n");
-      printf("\t --small n \tSet size of small dimension\n");
-      printf("\t --swap\tSwap medium and large sizes over\n");
+      printf("\t --outer  n \tSet size of outer dimension\n");
+      printf("\t --inner  n \tSet size of middle dimensions\n");
+      printf("\t --middle n \tSet size of inner dimension\n");
       printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
-      printf("\t Large  is %12d elements\n", LARGE);
-      printf("\t Medium is %12d elements\n", MEDIUM);
-      printf("\t Small  is %12d elements\n", SMALL);
+      printf("\t Outer   is %12d elements\n", OUTER);
+      printf("\t Middle are %12d elements\n", MIDDLE);
+      printf("\t Inner   is %12d elements\n", INNER);
       exit(EXIT_SUCCESS);
     }
     else
