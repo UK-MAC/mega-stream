@@ -259,34 +259,6 @@ int main(int argc, char *argv[])
 
   /* Check the results */
   /* TODO */
-  //const double gold = 0.1 + 0.2*0.6 + 0.3*0.7 + 0.4*0.8;
-  //const double gold_sum = gold*S_size*ntimes;
-
-  /* Check the r array */
-  /*for (int k = 0; k < L_size; k++)
-    for (int j = 0; j < M_size; j++)
-      for (int i = 0; i < S_size; i++)
-      {
-        if (fabs(r[IDX3(i,j,k,S_size,M_size)]-gold) > TOLR)
-        {
-          printf("Results incorrect - at (%d,%d,%d), %lf should be %lf\n",
-            i,j,k, r[IDX3(i,j,k,S_size,M_size)], gold);
-          goto sumcheck;
-        }
-      }
-*/
-//sumcheck:
-  /* Check the reduction array */
- /* for (int i = 0; i < L_size*M_size; i++)
-  {
-    if (fabs(sum[i]-gold_sum) > TOLR)
-    {
-      printf("Reduction incorrect - at %d, %lf should be %lf\n",
-        i, sum[i], gold_sum);
-      break;
-    }
-  }
-*/
 
   /* Print timings */
   double min = DBL_MAX;
@@ -365,7 +337,6 @@ void kernel(
     } /* Nl */
   } /* Nm */
 }
-
 
 void parse_args(int argc, char *argv[])
 {
