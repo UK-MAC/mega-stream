@@ -57,6 +57,17 @@
 /* Tollerance with which to check final array values */
 #define TOLR 1.0E-15
 
+/* Starting values */
+#define R_START 0.0
+#define Q_START 0.01
+#define X_START 0.02
+#define Y_START 0.03
+#define Z_START 0.04
+#define A_START 0.06
+#define B_START 0.07
+#define C_START 0.08
+
+
 void kernel(
   const int Ni, const int Nj, const int Nk, const int Nl, const int Nm,
   double * restrict r, const double * restrict q,
@@ -167,8 +178,8 @@ int main(int argc, char *argv[])
         for (int k = 0; k < Nk; k++) {
           for (int j = 0; j < Nj; j++) {
             for (int i = 0; i < Ni; i++) {
-              q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = 0.1;
-              r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = 0.0;
+              q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = Q_START;
+              r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = R_START;
             }
           }
         }
@@ -181,7 +192,7 @@ int main(int argc, char *argv[])
       for (int k = 0; k < Nk; k++) {
         for (int j = 0; j < Nj; j++) {
           for (int i = 0; i < Ni; i++) {
-            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 0.2;
+            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = X_START;
           }
         }
       }
@@ -193,7 +204,7 @@ int main(int argc, char *argv[])
       for (int l = 0; l < Nl; l++) {
         for (int j = 0; j < Nj; j++) {
           for (int i = 0; i < Ni; i++) {
-            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 0.3;
+            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = Y_START;
           }
         }
       }
@@ -205,7 +216,7 @@ int main(int argc, char *argv[])
       for (int l = 0; l < Nl; l++) {
         for (int k = 0; k < Nk; k++) {
           for (int i = 0; i < Ni; i++) {
-            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 0.4;
+            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = Z_START;
           }
         }
       }
@@ -214,9 +225,9 @@ int main(int argc, char *argv[])
     /* a, b, and c */
     #pragma omp for
     for (int i = 0; i < Ni; i++) {
-      a[i] = 0.6;
-      b[i] = 0.7;
-      c[i] = 0.8;
+      a[i] = A_START;
+      b[i] = B_START;
+      c[i] = C_START;
     }
 
     /* sum */
