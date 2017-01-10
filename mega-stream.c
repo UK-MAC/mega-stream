@@ -257,8 +257,11 @@ int main(int argc, char *argv[])
 
   }
 
-  /* Check the results */
-  /* TODO */
+  /* Check the results - total of the sum array */
+  double total = 0.0;
+  for (int i = 0; i < Nj*Nk*Nl*Nm; i++)
+    total += sum[i];
+  printf("Sum total: %lf\n", total);
 
   /* Print timings */
   double min = DBL_MAX;
@@ -271,6 +274,7 @@ int main(int argc, char *argv[])
   }
   avg /= (double)(ntimes - 1);
 
+  printf("\n");
   printf("Bandwidth MB/s  Min time    Max time    Avg time\n");
   printf("%12.1f %11.6f %11.6f %11.6f\n", moved/min, min, max, avg);
 
