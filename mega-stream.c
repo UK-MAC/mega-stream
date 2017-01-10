@@ -47,8 +47,8 @@
   The small arrays are of size inner and are indexed with 1 index.
 
 */
-#define OUTER   32 // 2^5
-#define MIDDLE   8 // 2^3
+#define OUTER   64 // 3^6
+#define MIDDLE  16 // 2^4
 #define INNER  128 // 2^7
 
 /* Default alignment of 2 MB page boundaries */
