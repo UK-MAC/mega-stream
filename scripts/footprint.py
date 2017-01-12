@@ -40,7 +40,13 @@ for i in range(len(Ni)):
       3.0 * Ni[i] +
       (Nj[j]**3)*Nm
     )
-      
+
+# zero too big results
+data[3][4] = 0.0
+data[4][4] = 0.0
+data[5][4] = 0.0
+data[6][3:] = 0.0
+data[7][3:] = 0.0
         
 fig, ax = plt.subplots()
 plt.pcolor(data, cmap='GnBu')
