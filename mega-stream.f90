@@ -67,7 +67,7 @@ PROGRAM megastream
   INTEGER :: i, j, k, l, m, t
 
   ! Print information
-  WRITE(*, *) 'MEGA-STREAM! - v0.3'
+  WRITE(*, '(a)') 'MEGA-STREAM! - v0.3'
   WRITE(*, *)
   !WRITE(*, '(a,I,a,f8.1,a)') 'Small arrays: ', S_size, ' elements', S_size*8*1.0E-3, 'KB'
   !WRITE(*, '(a,I,a,I,a,f8.1,a)') 'Medium arrays: ', S_size, 'x', M_size, ' elements', S_size*M_size*8*1.0E-6, 'MB'
@@ -78,7 +78,7 @@ PROGRAM megastream
     !3.0*S_size +               &
     !L_size*M_size)             &
     !, ' MB'
-  WRITE(*, *) 'Running ', ntimes, 'times'
+  WRITE(*, '(a,I,a)') 'Running ', ntimes, ' times'
   WRITE(*, *)
 
   ! Total memory moved
@@ -127,10 +127,11 @@ PROGRAM megastream
 
 
   ! Check the results
-  WRITE(*, *) "Sum total: ", SUM(total)
+  WRITE(*, '(a,G)') "Sum total: ", SUM(total)
+  WRITE(*, *)
 
   ! Print timings
-  WRITE(*, '(a,a,a,a)') 'Bandwidth MB/s', 'Min time', 'Max time', 'Avg time'
+  WRITE(*, '(a,a,a,a)') 'Bandwidth MB/s ', 'Min time ', 'Max time ', 'Avg time'
   WRITE(*, '(f12.1,f11.6,f11.6,f11.6)') &
     moved / MINVAL(timings(2:ntimes)), &
     MINVAL(timings(2:ntimes)), &
