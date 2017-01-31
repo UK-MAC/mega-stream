@@ -327,7 +327,7 @@ SUBROUTINE parse_args(Ni, Nj, Nk, Nl, Nm, ntimes)
 
   INTEGER :: i = 1
 
-  DO WHILE (i < iargc())
+  DO WHILE (i <= iargc())
     CALL getarg(i, arg)
     IF (arg .EQ. "--outer") THEN
       i = i + 1
@@ -356,6 +356,14 @@ SUBROUTINE parse_args(Ni, Nj, Nk, Nl, Nm, ntimes)
         WRITE(*, *)
         STOP
       END IF
+    ELSE IF (arg .EQ. "--help") THEN
+      WRITE(*, *) "--outer  n  Set size of outer dimension"
+      WRITE(*, *) "--inner  n  Set size of inner dimension"
+      WRITE(*, *) "--middle n  Set size of middle dimension"
+      WRITE(*, *) "--Nj     n  Set size of the j dimension"
+      WRITE(*, *) "--ntimes n  Run the benchmark n times"
+      WRITE(*, *)
+      STOP
     ELSE
       WRITE(*, *) "Unrecognised argument ", arg
       WRITE(*, *)
