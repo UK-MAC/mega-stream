@@ -81,6 +81,15 @@ PROGRAM megastream
   WRITE(*, *) 'Running ', ntimes, 'times'
   WRITE(*, *)
 
+  ! Total memory moved
+  moved = 8 * 1.0E-6 * ( &
+    Ni*Nj*Nk*Nl*Nm  +    & ! read q
+    Ni*Nj*Nk*Nl*Nm  +    & ! write r
+    Ni + Ni + Ni    +    & ! read a, b and c
+    2.0*Ni*Nj*Nk*Nm +    & ! read and write x
+    2.0*Ni*Nj*Nl*Nm +    & ! read and write y
+    2.0*Ni*Nk*Nl*Nm +    & ! read and write z
+    2.0*Nj*Nk*Nl*Nm )      ! read and write sum
 
   ! Allocate memory
   NULLIFY(q, r)
