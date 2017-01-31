@@ -193,6 +193,9 @@ SUBROUTINE kernel(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
 !$OMP END PARALLEL DO
 
 END SUBROUTINE kernel
+!**************************************************************************
+!* End of Kernel
+!*************************************************************************/
 
 ! Initilise the arrays
 SUBROUTINE init(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
