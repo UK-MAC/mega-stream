@@ -318,19 +318,22 @@ void kernel(
           #pragma omp simd reduction(+:total)
           for (int i = 0; i < Ni; i++) {
             /* Set r */
-            r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] =
+            double tmp_r =
               q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] +
               a[i] * x[IDX4(i,j,k,m,Ni,Nj,Nk)] +
               b[i] * y[IDX4(i,j,l,m,Ni,Nj,Nl)] +
               c[i] * z[IDX4(i,k,l,m,Ni,Nk,Nl)];
 
             /* Update x, y and z */
-            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 0.2*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - x[IDX4(i,j,k,m,Ni,Nj,Nk)];
-            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 0.2*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - y[IDX4(i,j,l,m,Ni,Nj,Nl)];
-            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 0.2*r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] - z[IDX4(i,k,l,m,Ni,Nk,Nl)];
+            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 0.2*tmp_r - x[IDX4(i,j,k,m,Ni,Nj,Nk)];
+            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 0.2*tmp_r - y[IDX4(i,j,l,m,Ni,Nj,Nl)];
+            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 0.2*tmp_r - z[IDX4(i,k,l,m,Ni,Nk,Nl)];
 
             /* Reduce over Ni */
-            total += r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)];
+            total += tmp_r;
+
+            /* Save r */
+            r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = tmp_r;
 
           } /* Ni */
 
