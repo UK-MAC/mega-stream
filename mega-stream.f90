@@ -41,16 +41,6 @@ PROGRAM megastream
   ! Tollerance with which to check final array values
   REAL(8), PARAMETER :: TOLR = 1.0E-15
 
-  ! Starting values
-  REAL(8), PARAMETER :: R_START = 0.0_8
-  REAL(8), PARAMETER :: Q_START = 0.01_8
-  REAL(8), PARAMETER :: X_START = 0.02_8
-  REAL(8), PARAMETER :: Y_START = 0.03_8
-  REAL(8), PARAMETER :: Z_START = 0.04_8
-  REAL(8), PARAMETER :: A_START = 0.06_8
-  REAL(8), PARAMETER :: B_START = 0.07_8
-  REAL(8), PARAMETER :: C_START = 0.08_8
-
   ! Variables
 
   ! Default strides
@@ -104,88 +94,10 @@ PROGRAM megastream
   ALLOCATE(c(Ni))
   ALLOCATE(total(Nj,Nk,Nl,Nm))
 
+  CALL init(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
+
   ALLOCATE(timings(ntimes))
 
-  ! Initalise the data */
-!$OMP PARALLEL
-  ! q and r
-!$OMP DO
-  DO m = 1, Nm
-    DO l = 1, Nl
-      DO k = 1, Nk
-        DO j = 1, Nj
-          DO i = 1, Ni
-            r(i,j,k,l,m) = R_START
-            q(i,j,k,l,m) = Q_START
-          END DO
-        END DO
-       END DO
-     END DO
-   END DO
-!$OMP END DO
-
-  ! x
-!$OMP DO
-  DO m = 1, Nm
-    DO k = 1, Nk
-      DO j = 1, Nj
-        DO i = 1, Ni
-          x(i,j,k,m) = X_START
-        END DO
-      END DO
-     END DO
-   END DO
-!$OMP END DO
-
-  ! y
-!$OMP DO
-  DO m = 1, Nm
-    DO l = 1, Nl
-      DO j = 1, Nj
-        DO i = 1, Ni
-          y(i,j,l,m) = Y_START
-        END DO
-      END DO
-     END DO
-   END DO
-!$OMP END DO
-
-  ! z
-!$OMP DO
-  DO m = 1, Nm
-    DO l = 1, Nl
-      DO k = 1, Nk
-        DO i = 1, Ni
-          z(i,k,l,m) = Z_START
-        END DO
-      END DO
-     END DO
-   END DO
-!$OMP END DO
-
-  ! a, b, and c
-!$OMP DO
-  DO i = 1, Ni
-    a(i) = A_START
-    b(i) = B_START
-    c(i) = C_START
-  END DO
-!$OMP END DO
-
-  ! sum
-!$OMP DO
-  DO m = 1, Nm
-    DO l = 1, Nl
-      DO k = 1, Nk
-        DO j = 1, Nj
-          total(j,k,l,m) = 1.0_8
-        END DO
-      END DO
-    END DO
-  END DO
-!$OMP END DO
-
-!$OMP END PARALLEL
 
   ! Run the kernel multiple times
   DO t = 1, ntimes
@@ -281,4 +193,110 @@ SUBROUTINE kernel(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
 !$OMP END PARALLEL DO
 
 END SUBROUTINE kernel
+
+! Initilise the arrays
+SUBROUTINE init(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
+
+  IMPLICIT NONE
+
+  INTEGER, INTENT(IN) :: Ni, Nj, Nk, Nl, Nm
+  REAL(8), DIMENSION(Ni, Nj, Nk, Nl, Nm), INTENT(INOUT) :: q, r
+  REAL(8), DIMENSION(Ni, Nj, Nk, Nm), INTENT(INOUT) :: x
+  REAL(8), DIMENSION(Ni, Nj, Nl, Nm), INTENT(INOUT) :: y
+  REAL(8), DIMENSION(Ni, Nk, Nl, Nm), INTENT(INOUT) :: z
+  REAL(8), DIMENSION(Ni), INTENT(INOUT) :: a, b, c
+  REAL(8), DIMENSION(Nj, Nk, Nl, Nm), INTENT(INOUT) :: total
+
+  ! Starting values
+  REAL(8), PARAMETER :: R_START = 0.0_8
+  REAL(8), PARAMETER :: Q_START = 0.01_8
+  REAL(8), PARAMETER :: X_START = 0.02_8
+  REAL(8), PARAMETER :: Y_START = 0.03_8
+  REAL(8), PARAMETER :: Z_START = 0.04_8
+  REAL(8), PARAMETER :: A_START = 0.06_8
+  REAL(8), PARAMETER :: B_START = 0.07_8
+  REAL(8), PARAMETER :: C_START = 0.08_8
+
+  INTEGER :: i, j, k, l, m
+
+!$OMP PARALLEL
+  ! q and r
+!$OMP DO
+  DO m = 1, Nm
+    DO l = 1, Nl
+      DO k = 1, Nk
+        DO j = 1, Nj
+          DO i = 1, Ni
+            r(i,j,k,l,m) = R_START
+            q(i,j,k,l,m) = Q_START
+          END DO
+        END DO
+       END DO
+     END DO
+   END DO
+!$OMP END DO
+
+  ! x
+!$OMP DO
+  DO m = 1, Nm
+    DO k = 1, Nk
+      DO j = 1, Nj
+        DO i = 1, Ni
+          x(i,j,k,m) = X_START
+        END DO
+      END DO
+     END DO
+   END DO
+!$OMP END DO
+
+  ! y
+!$OMP DO
+  DO m = 1, Nm
+    DO l = 1, Nl
+      DO j = 1, Nj
+        DO i = 1, Ni
+          y(i,j,l,m) = Y_START
+        END DO
+      END DO
+     END DO
+   END DO
+!$OMP END DO
+
+  ! z
+!$OMP DO
+  DO m = 1, Nm
+    DO l = 1, Nl
+      DO k = 1, Nk
+        DO i = 1, Ni
+          z(i,k,l,m) = Z_START
+        END DO
+      END DO
+     END DO
+   END DO
+!$OMP END DO
+
+  ! a, b, and c
+!$OMP DO
+  DO i = 1, Ni
+    a(i) = A_START
+    b(i) = B_START
+    c(i) = C_START
+  END DO
+!$OMP END DO
+
+  ! sum
+!$OMP DO
+  DO m = 1, Nm
+    DO l = 1, Nl
+      DO k = 1, Nk
+        DO j = 1, Nj
+          total(j,k,l,m) = 0.0_8
+        END DO
+      END DO
+    END DO
+  END DO
+!$OMP END DO
+
+!$OMP END PARALLEL
+END SUBROUTINE
 
