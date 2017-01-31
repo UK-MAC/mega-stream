@@ -368,6 +368,10 @@ void parse_args(int argc, char *argv[])
       Nk = num;
       Nl = num;
     }
+    else if (strcmp(argv[i], "--Nj") == 0)
+    {
+      Nj = atoi(argv[++i]);
+    }
     else if (strcmp(argv[i], "--ntimes") == 0)
     {
       ntimes = atoi(argv[++i]);
@@ -383,6 +387,7 @@ void parse_args(int argc, char *argv[])
       printf("\t --outer  n \tSet size of outer dimension\n");
       printf("\t --inner  n \tSet size of middle dimensions\n");
       printf("\t --middle n \tSet size of inner dimension\n");
+      printf("\t --Nj     n \tSet size of the j dimension\n");
       printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
       printf("\t Outer   is %12d elements\n", OUTER);
