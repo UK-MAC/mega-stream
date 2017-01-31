@@ -98,11 +98,15 @@ int main(int argc, char *argv[])
   printf("Small arrays:  %d elements\t\t(%.1lf KB)\n",
     Ni, Ni*sizeof(double)*1.0E-3);
 
-  printf("Medium arrays: %d x %d x %d x %d elements\t(%.1lf MB)\n",
-    Ni, Nj, Nj, Nm, Ni*Nj*Nj*Nm*sizeof(double)*1.0E-6);
+  printf("Medium arrays: %d x %d x %d x %d elements\t(%.1lf MB)\n"
+         "               %d x %d x %d x %d elements\t(%.1lf MB)\n"
+         "               %d x %d x %d x %d elements\t(%.1lf MB)\n",
+    Ni, Nj, Nk, Nm, Ni*Nj*Nk*Nm*sizeof(double)*1.0E-6,
+    Ni, Nj, Nl, Nm, Ni*Nj*Nl*Nm*sizeof(double)*1.0E-6,
+    Ni, Nk, Nl, Nm, Ni*Nk*Nl*Nm*sizeof(double)*1.0E-6);
 
   printf("Large arrays:  %d x %d x %d x %d x %d elements\t(%.1lf MB)\n",
-    Ni, Nj, Nj, Nj, Nm, Ni*Nj*Nj*Nj*Nm*sizeof(double)*1.0E-6);
+    Ni, Nj, Nk, Nl, Nm, Ni*Nj*Nk*Nl*Nm*sizeof(double)*1.0E-6);
 
   const double footprint = (double)sizeof(double) * 1.0E-6 * (
     2.0*Ni*Nj*Nk*Nl*Nm +  /* r, q */
