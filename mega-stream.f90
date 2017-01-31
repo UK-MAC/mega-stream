@@ -69,9 +69,13 @@ PROGRAM megastream
   ! Print information
   WRITE(*, '(a)') 'MEGA-STREAM! - v0.3'
   WRITE(*, *)
-  !WRITE(*, '(a,I,a,f8.1,a)') 'Small arrays: ', S_size, ' elements', S_size*8*1.0E-3, 'KB'
+
+  CALL parse_args(Ni, Nj, Nk, Nl, Nm, ntimes)
+
+  WRITE(*, '(a,I,a,f8.1,a)') 'Small arrays: ', Ni, ' elements ', Ni*8*1.0E-3, 'KB'
+  WRITE(*, '(a,I4,a,I4,a,I4,a,I4,a,I4,f8.1,a)') 'Large arrays: ', Ni, ' x', Nj, &
+    ' x', Nk, ' x', Nl, ' x', Nm, Ni*Nj*Nk*Nl*Nm*8*1.0E-6, 'MB'
   !WRITE(*, '(a,I,a,I,a,f8.1,a)') 'Medium arrays: ', S_size, 'x', M_size, ' elements', S_size*M_size*8*1.0E-6, 'MB'
-  !WRITE(*, '(a,I,a,I,a,I,a,f8.1,a)') 'Large arrays: ', S_size, 'x', M_size, 'x', L_size, ' elements', S_size*M_size*L_size*8*1.0E-6, 'MB'
   !WRITE(*, '(a,f8.1,a)') 'Memory footprint: ', 8 * 1.0E-6 * ( &
     !2.0*L_size*M_size*S_size + &
     !3.0*M_size*S_size +        &
@@ -311,5 +315,54 @@ SUBROUTINE init(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
 !$OMP END DO
 
 !$OMP END PARALLEL
+END SUBROUTINE
+
+SUBROUTINE parse_args(Ni, Nj, Nk, Nl, Nm, ntimes)
+
+  IMPLICIT NONE
+
+  INTEGER, INTENT(INOUT) :: Ni, Nj, Nk, Nl, Nm, ntimes
+
+  CHARACTER(len=32) :: arg
+
+  INTEGER :: i = 1
+
+  DO WHILE (i < iargc())
+    CALL getarg(i, arg)
+    IF (arg .EQ. "--outer") THEN
+      i = i + 1
+      CALL getarg(i, arg)
+      READ(arg, *) Nm
+    ELSE IF (arg .EQ. "--inner") THEN
+      i = i + 1
+      CALL getarg(i, arg)
+      READ(arg, *) Ni
+    ELSE IF (arg .EQ. "--middle") THEN
+      i = i + 1
+      CALL getarg(i, arg)
+      READ(arg, *) Nj
+      READ(arg, *) Nk
+      READ(arg, *) Nl
+    ELSE IF (arg .EQ. "--Nj") THEN
+      i = i + 1
+      CALL getarg(i, arg)
+      READ(arg, *) Nj
+    ELSE IF (arg .EQ. "--ntimes") THEN
+      i = i + 1
+      CALL getarg(i, arg)
+      READ(arg, *) ntimes
+      IF (ntimes < 2) THEN
+        WRITE(*, *) "ntimes must be 2 or greater"
+        WRITE(*, *)
+        STOP
+      END IF
+    ELSE
+      WRITE(*, *) "Unrecognised argument ", arg
+      WRITE(*, *)
+      STOP
+    END IF
+    i = i + 1
+  END DO
+
 END SUBROUTINE
 
