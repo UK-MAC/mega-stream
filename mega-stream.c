@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define MIN(a,b) ((a) < (b)) ? (a) : (b)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
@@ -39,6 +40,7 @@
 #define IDX3(i,j,k,ni,nj) ((i)+(ni)*IDX2((j),(k),(nj)))
 #define IDX4(i,j,k,l,ni,nj,nk) ((i)+(ni)*IDX3((j),(k),(l),(nj),(nk)))
 #define IDX5(i,j,k,l,m,ni,nj,nk,nl) ((i)+(ni)*IDX4((j),(k),(l),(m),(nj),(nk),(nl)))
+#define IDX6(i,j,k,l,m,n,ni,nj,nk,nl,nm) ((i)+(ni)*IDX5((j),(k),(l),(m),(n),(nj),(nk),(nl),(nm)))
 
 /*
   Arrays are defined in terms of 3 sizes: inner, middle and outer.
@@ -50,6 +52,12 @@
 #define OUTER   64 // 3^6
 #define MIDDLE  16 // 2^4
 #define INNER  128 // 2^7
+
+/* Vector length is machine-specific and should be overridden by makefile */
+#ifndef VLEN
+#define VLEN 8
+#endif
+static_assert((VLEN > 0) && ((VLEN & (VLEN-1)) == 0), "VLEN must be a power of 2.");
 
 /* Default alignment of 2 MB page boundaries */
 #define ALIGNMENT 2*1024*1024
@@ -67,13 +75,27 @@
 #define B_START 0.07
 #define C_START 0.08
 
+#ifdef __APPLE__
+void* aligned_alloc(size_t alignment, size_t size)
+{
+    void* mem;
+    posix_memalign(&mem, alignment, size);
+    return mem;
+}
+#endif
 
 void kernel(
+  const int Ng,
   const int Ni, const int Nj, const int Nk, const int Nl, const int Nm,
-  double * restrict r, const double * restrict q,
-  double * restrict x, double * restrict y, double * restrict z,
-  const double * restrict a, const double * restrict b, const double * restrict c,
-  double * restrict sum
+  double (* restrict r)[Ng][Nl][Nk][Nj][VLEN],
+  const double (* restrict q)[Ng][Nl][Nk][Nj][VLEN],
+  double (* restrict x)[Ng][Nk][Nj][VLEN],
+  double (* restrict y)[Ng][Nl][Nj][VLEN],
+  double (* restrict z)[Ng][Nl][Nk][VLEN],
+  const double (* restrict a)[VLEN],
+  const double (* restrict b)[VLEN],
+  const double (* restrict c)[VLEN],
+  double (* restrict sum)[Nl][Nk][Nj]
 );
 void parse_args(int argc, char *argv[]);
 
@@ -83,6 +105,7 @@ int Nj = MIDDLE;
 int Nk = MIDDLE;
 int Nl = MIDDLE;
 int Nm = OUTER;
+int Ng;
 
 /* Number of iterations to run benchmark */
 int ntimes = 100;
@@ -92,21 +115,16 @@ int main(int argc, char *argv[])
 
   printf("MEGA-STREAM! - v%s\n\n", VERSION);
 
-
   parse_args(argc, argv);
 
   printf("Small arrays:  %d elements\t\t(%.1lf KB)\n",
     Ni, Ni*sizeof(double)*1.0E-3);
 
-  printf("Medium arrays: %d x %d x %d x %d elements\t(%.1lf MB)\n"
-         "               %d x %d x %d x %d elements\t(%.1lf MB)\n"
-         "               %d x %d x %d x %d elements\t(%.1lf MB)\n",
-    Ni, Nj, Nk, Nm, Ni*Nj*Nk*Nm*sizeof(double)*1.0E-6,
-    Ni, Nj, Nl, Nm, Ni*Nj*Nl*Nm*sizeof(double)*1.0E-6,
-    Ni, Nk, Nl, Nm, Ni*Nk*Nl*Nm*sizeof(double)*1.0E-6);
+  printf("Medium arrays: %d x %d x %d x %d elements\t(%.1lf MB)\n",
+    Ni, Nj, Nj, Nm, Ni*Nj*Nj*Nm*sizeof(double)*1.0E-6);
 
   printf("Large arrays:  %d x %d x %d x %d x %d elements\t(%.1lf MB)\n",
-    Ni, Nj, Nk, Nl, Nm, Ni*Nj*Nk*Nl*Nm*sizeof(double)*1.0E-6);
+    Ni, Nj, Nj, Nj, Nm, Ni*Nj*Nj*Nj*Nm*sizeof(double)*1.0E-6);
 
   const double footprint = (double)sizeof(double) * 1.0E-6 * (
     2.0*Ni*Nj*Nk*Nl*Nm +  /* r, q */
@@ -118,7 +136,7 @@ int main(int argc, char *argv[])
     );
   printf("Memory footprint: %.1lf MB\n", footprint);
 
-  /* Total memory moved - the arrays plus an extra sum as update is += */
+  /* Total memory moved (in the best case) - the arrays plus an extra sum as update is += */
   const double moved = (double)sizeof(double) * 1.0E-6 * (
     Ni*Nj*Nk*Nl*Nm  + /* read q */
     Ni*Nj*Nk*Nl*Nm  + /* write r */
@@ -129,48 +147,28 @@ int main(int argc, char *argv[])
     2.0*Nj*Nk*Nl*Nm   /* read and write sum */
   );
 
+  /* Split inner-most dimension into VLEN-sized chunks */
+  Ng = ((Ni + (VLEN-1)) & ~(VLEN-1)) / VLEN;
+  printf("Inner dimension split into %d chunks of size %d\n", Ng, VLEN);
+
   printf("Running %d times\n", ntimes);
 
   printf("\n");
 
   double timings[ntimes];
 
-#ifdef __APPLE__
-  double *q;
-  posix_memalign(&q, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
-  double *r;
-  posix_memalign(&r, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
+  double *q = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Nj*Nk*Nl*Nm*Ng);
+  double *r = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Nj*Nk*Nl*Nm*Ng);
 
-  double *x;
-  posix_memalign(&x, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nm);
-  double *y;
-  posix_memalign(&y, ALIGNMENT, sizeof(double)*Ni*Nj*Nl*Nm);
-  double *z;
-  posix_memalign(&z, ALIGNMENT, sizeof(double)*Ni*Nk*Nl*Nm);
+  double *x = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Nj*Nk*Nm*Ng);
+  double *y = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Nj*Nl*Nm*Ng);
+  double *z = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Nk*Nl*Nm*Ng);
 
-  double *a;
-  posix_memalign(&a, ALIGNMENT, sizeof(double)*Ni);
-  double *b;
-  posix_memalign(&b, ALIGNMENT, sizeof(double)*Ni);
-  double *c;
-  posix_memalign(&c, ALIGNMENT, sizeof(double)*Ni);
-
-  double *sum;
-  posix_memalign(&sum, ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
-#else
-  double *q = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
-  double *r = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
-
-  double *x = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nm);
-  double *y = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nl*Nm);
-  double *z = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nk*Nl*Nm);
-
-  double *a = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
-  double *b = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
-  double *c = aligned_alloc(ALIGNMENT, sizeof(double)*Ni);
+  double *a = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Ng);
+  double *b = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Ng);
+  double *c = aligned_alloc(ALIGNMENT, sizeof(double)*VLEN*Ng);
 
   double *sum = aligned_alloc(ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
-#endif
 
   /* Initalise the data */
   #pragma omp parallel
@@ -178,12 +176,15 @@ int main(int argc, char *argv[])
     /* q and r */
     #pragma omp for
     for (int m = 0; m < Nm; m++) {
-      for (int l = 0; l < Nl; l++) {
-        for (int k = 0; k < Nk; k++) {
-          for (int j = 0; j < Nj; j++) {
-            for (int i = 0; i < Ni; i++) {
-              q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = Q_START;
-              r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = R_START;
+      for (int g = 0; g < Ng; g++) {
+        for (int l = 0; l < Nl; l++) {
+          for (int k = 0; k < Nk; k++) {
+            for (int j = 0; j < Nj; j++) {
+              #pragma omp simd
+              for (int v = 0; v < VLEN; v++) {
+                q[IDX6(v,j,k,l,g,m,VLEN,Nj,Nk,Nl,Ng)] = Q_START;
+                r[IDX6(v,j,k,l,g,m,VLEN,Nj,Nk,Nl,Ng)] = R_START;
+              }
             }
           }
         }
@@ -193,10 +194,13 @@ int main(int argc, char *argv[])
     /* x */
     #pragma omp for
     for (int m = 0; m < Nm; m++) {
-      for (int k = 0; k < Nk; k++) {
-        for (int j = 0; j < Nj; j++) {
-          for (int i = 0; i < Ni; i++) {
-            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = X_START;
+      for (int g = 0; g < Ng; g++) {
+        for (int k = 0; k < Nk; k++) {
+          for (int j = 0; j < Nj; j++) {
+            #pragma omp simd
+            for (int v = 0; v < VLEN; v++) {
+              x[IDX5(v,j,k,g,m,VLEN,Nj,Nk,Ng)] = X_START;
+            }
           }
         }
       }
@@ -205,10 +209,13 @@ int main(int argc, char *argv[])
     /* y */
     #pragma omp for
     for (int m = 0; m < Nm; m++) {
-      for (int l = 0; l < Nl; l++) {
-        for (int j = 0; j < Nj; j++) {
-          for (int i = 0; i < Ni; i++) {
-            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = Y_START;
+      for (int g = 0; g < Ng; g++) {
+        for (int l = 0; l < Nl; l++) {
+          for (int j = 0; j < Nj; j++) {
+            #pragma omp simd
+            for (int v = 0; v < VLEN; v++) {
+              y[IDX5(v,j,l,g,m,VLEN,Nj,Nl,Ng)] = Y_START;
+            }
           }
         }
       }
@@ -217,10 +224,13 @@ int main(int argc, char *argv[])
     /* z */
     #pragma omp for
     for (int m = 0; m < Nm; m++) {
-      for (int l = 0; l < Nl; l++) {
-        for (int k = 0; k < Nk; k++) {
-          for (int i = 0; i < Ni; i++) {
-            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = Z_START;
+      for (int g = 0; g < Ng; g++) {
+        for (int l = 0; l < Nl; l++) {
+          for (int k = 0; k < Nk; k++) {
+            #pragma omp simd
+            for (int v = 0; v < VLEN; v++) {
+              z[IDX5(v,k,l,g,m,VLEN,Nk,Nl,Ng)] = Z_START;
+            }
           }
         }
       }
@@ -228,10 +238,13 @@ int main(int argc, char *argv[])
 
     /* a, b, and c */
     #pragma omp for
-    for (int i = 0; i < Ni; i++) {
-      a[i] = A_START;
-      b[i] = B_START;
-      c[i] = C_START;
+    for (int g = 0; g < Ng; g++) {
+      #pragma omp simd
+      for (int v = 0; v < VLEN; v++) {
+        a[IDX2(v,g,VLEN)] = A_START;
+        b[IDX2(v,g,VLEN)] = B_START;
+        c[IDX2(v,g,VLEN)] = C_START;
+      }
     }
 
     /* sum */
@@ -251,7 +264,16 @@ int main(int argc, char *argv[])
   for (int t = 0; t < ntimes; t++) {
     double tick = omp_get_wtime();
 
-    kernel(Ni,Nj,Nk,Nl,Nm,r,q,x,y,z,a,b,c,sum);
+    kernel(Ng,Ni,Nj,Nk,Nl,Nm,
+        (double(*)[Ng][Nl][Nk][Nj][VLEN]) r,
+        (const double(*)[Ng][Nl][Nk][Nj][VLEN]) q,
+        (double(*)[Ng][Nk][Nj][VLEN]) x,
+        (double(*)[Ng][Nl][Nj][VLEN]) y,
+        (double(*)[Ng][Nl][Nk][VLEN]) z,
+        (const double(*)[VLEN]) a,
+        (const double(*)[VLEN]) b,
+        (const double(*)[VLEN]) c,
+        (double(*)[Nl][Nk][Nj]) sum);
 
     /* Swap the pointers */
     double *tmp = q; q = r; r = tmp;
@@ -300,52 +322,55 @@ int main(int argc, char *argv[])
 /**************************************************************************
  * Kernel
  *************************************************************************/
+#include <immintrin.h>
 void kernel(
+  const int Ng,
   const int Ni, const int Nj, const int Nk, const int Nl, const int Nm,
-  double * restrict r,
-  const double * restrict q,
-  double * restrict x,
-  double * restrict y,
-  double * restrict z,
-  const double * restrict a,
-  const double * restrict b,
-  const double * restrict c,
-  double * restrict sum
+  double (* restrict r)[Ng][Nl][Nk][Nj][VLEN],
+  const double (* restrict q)[Ng][Nl][Nk][Nj][VLEN],
+  double (* restrict x)[Ng][Nk][Nj][VLEN],
+  double (* restrict y)[Ng][Nl][Nj][VLEN],
+  double (* restrict z)[Ng][Nl][Nk][VLEN],
+  const double (* restrict a)[VLEN],
+  const double (* restrict b)[VLEN],
+  const double (* restrict c)[VLEN],
+  double (* restrict sum)[Nl][Nk][Nj]
   )
 {
   #pragma omp parallel for
   for (int m = 0; m < Nm; m++) {
-    for (int l = 0; l < Nl; l++) {
-      for (int k = 0; k < Nk; k++) {
-        for (int j = 0; j < Nj; j++) {
-          double total = 0.0;
-          #pragma omp simd reduction(+:total)
-          for (int i = 0; i < Ni; i++) {
-            /* Set r */
-            double tmp_r =
-              q[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] +
-              a[i] * x[IDX4(i,j,k,m,Ni,Nj,Nk)] +
-              b[i] * y[IDX4(i,j,l,m,Ni,Nj,Nl)] +
-              c[i] * z[IDX4(i,k,l,m,Ni,Nk,Nl)];
+    for (int g = 0; g < Ng; g++) {
+      for (int l = 0; l < Nl; l++) {
+        for (int k = 0; k < Nk; k++) {
+          for (int j = 0; j < Nj; j++) {
+            double total = 0.0;
+            _mm_prefetch((const char*) (&q[m][g][l][k][j][0] + 32*VLEN), _MM_HINT_T1);
+            #pragma vector nontemporal(r)
+            #pragma omp simd reduction(+:total) aligned(a,b,c,x,y,z,r,q:64)
+            for (int v = 0; v < VLEN; v++) {
+              /* Set r */
+              r[m][g][l][k][j][v] =
+                q[m][g][l][k][j][v] +
+                a[g][v] * x[m][g][k][j][v] +
+                b[g][v] * y[m][g][l][j][v] +
+                c[g][v] * z[m][g][l][k][v];
 
-            /* Update x, y and z */
-            x[IDX4(i,j,k,m,Ni,Nj,Nk)] = 0.2*tmp_r - x[IDX4(i,j,k,m,Ni,Nj,Nk)];
-            y[IDX4(i,j,l,m,Ni,Nj,Nl)] = 0.2*tmp_r - y[IDX4(i,j,l,m,Ni,Nj,Nl)];
-            z[IDX4(i,k,l,m,Ni,Nk,Nl)] = 0.2*tmp_r - z[IDX4(i,k,l,m,Ni,Nk,Nl)];
+              /* Update x, y and z */
+              x[m][g][k][j][v] = 0.2*r[m][g][l][k][j][v] - x[m][g][k][j][v];
+              y[m][g][l][j][v] = 0.2*r[m][g][l][k][j][v] - y[m][g][l][j][v];
+              z[m][g][l][k][v] = 0.2*r[m][g][l][k][j][v] - z[m][g][l][k][v];
 
-            /* Reduce over Ni */
-            total += tmp_r;
+              /* Reduce over Ni */
+              total += r[m][g][l][k][j][v];
 
-            /* Save r */
-            r[IDX5(i,j,k,l,m,Ni,Nj,Nk,Nl)] = tmp_r;
+            } /* VLEN */
 
-          } /* Ni */
+            sum[m][l][k][j] += total;
 
-          sum[IDX4(j,k,l,m,Nj,Nk,Nl)] += total;
-
-        } /* Nj */
-      } /* Nk */
-    } /* Nl */
+          } /* Nj */
+        } /* Nk */
+      } /* Nl */
+    } /* Ng */
   } /* Nm */
 }
 
@@ -368,10 +393,6 @@ void parse_args(int argc, char *argv[])
       Nk = num;
       Nl = num;
     }
-    else if (strcmp(argv[i], "--Nj") == 0)
-    {
-      Nj = atoi(argv[++i]);
-    }
     else if (strcmp(argv[i], "--ntimes") == 0)
     {
       ntimes = atoi(argv[++i]);
@@ -387,7 +408,6 @@ void parse_args(int argc, char *argv[])
       printf("\t --outer  n \tSet size of outer dimension\n");
       printf("\t --inner  n \tSet size of middle dimensions\n");
       printf("\t --middle n \tSet size of inner dimension\n");
-      printf("\t --Nj     n \tSet size of the j dimension\n");
       printf("\t --ntimes n\tRun the benchmark n times\n");
       printf("\n");
       printf("\t Outer   is %12d elements\n", OUTER);
