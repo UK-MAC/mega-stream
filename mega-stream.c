@@ -247,6 +247,7 @@ int main(int argc, char *argv[])
     }
   } /* End of parallel region */
 
+  double begin = omp_get_wtime();
   /* Run the kernel multiple times */
   for (int t = 0; t < ntimes; t++) {
     double tick = omp_get_wtime();
@@ -260,6 +261,8 @@ int main(int argc, char *argv[])
     timings[t] = tock-tick;
 
   }
+
+  double end = omp_get_wtime();
 
   /* Check the results - total of the sum array */
   double total = 0.0;
@@ -281,6 +284,7 @@ int main(int argc, char *argv[])
   printf("\n");
   printf("Bandwidth MB/s  Min time    Max time    Avg time\n");
   printf("%12.1f %11.6f %11.6f %11.6f\n", moved/min, min, max, avg);
+  printf("Total time: %11.6f\n", end-begin);
 
   /* Free memory */
   free(q);

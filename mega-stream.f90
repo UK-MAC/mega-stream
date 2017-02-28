@@ -61,6 +61,7 @@ PROGRAM megastream
 
   REAL(8), DIMENSION(:), ALLOCATABLE :: timings
   REAL(8) :: tick, tock
+  REAL(8) :: start, finish
 
   REAL(8) :: moved
 
@@ -111,6 +112,7 @@ PROGRAM megastream
 
   ALLOCATE(timings(ntimes))
 
+  start = omp_get_wtime()
 
   ! Run the kernel multiple times
   DO t = 1, ntimes
@@ -118,17 +120,19 @@ PROGRAM megastream
 
     CALL kernel(Ni, Nj, Nk, Nl, Nm, r, q, x, y, z, a, b, c, total)
 
+    tock = omp_get_wtime()
+    timings(t) = tock-tick
+
     ! Swap the pointers
     ptr_tmp => q
     q => r
     r => ptr_tmp
     NULLIFY(ptr_tmp)
 
-    tock = omp_get_wtime()
-    timings(t) = tock-tick
 
   END DO ! t
 
+  finish = omp_get_wtime()
 
   ! Check the results
   WRITE(*, '(a,G)') "Sum total: ", SUM(total)
@@ -141,6 +145,7 @@ PROGRAM megastream
     MINVAL(timings(2:ntimes)), &
     MAXVAL(timings(2:ntimes)), &
     SUM(timings(2:ntimes)) / (ntimes - 1)
+ WRITE(*, '(a,f11.6)') 'Total time: ', finish-start
 
 ! Deallocate memory
   DEALLOCATE(q, r)
