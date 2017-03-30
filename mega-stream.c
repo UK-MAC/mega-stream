@@ -137,26 +137,26 @@ int main(int argc, char *argv[])
 
 #ifdef __APPLE__
   double *q;
-  posix_memalign(&q, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
+  posix_memalign((void **)&q, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
   double *r;
-  posix_memalign(&r, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
+  posix_memalign((void **)&r, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
 
   double *x;
-  posix_memalign(&x, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nm);
+  posix_memalign((void **)&x, ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nm);
   double *y;
-  posix_memalign(&y, ALIGNMENT, sizeof(double)*Ni*Nj*Nl*Nm);
+  posix_memalign((void **)&y, ALIGNMENT, sizeof(double)*Ni*Nj*Nl*Nm);
   double *z;
-  posix_memalign(&z, ALIGNMENT, sizeof(double)*Ni*Nk*Nl*Nm);
+  posix_memalign((void **)&z, ALIGNMENT, sizeof(double)*Ni*Nk*Nl*Nm);
 
   double *a;
-  posix_memalign(&a, ALIGNMENT, sizeof(double)*Ni);
+  posix_memalign((void **)&a, ALIGNMENT, sizeof(double)*Ni);
   double *b;
-  posix_memalign(&b, ALIGNMENT, sizeof(double)*Ni);
+  posix_memalign((void **)&b, ALIGNMENT, sizeof(double)*Ni);
   double *c;
-  posix_memalign(&c, ALIGNMENT, sizeof(double)*Ni);
+  posix_memalign((void **)&c, ALIGNMENT, sizeof(double)*Ni);
 
   double *sum;
-  posix_memalign(&sum, ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
+  posix_memalign((void **)&sum, ALIGNMENT, sizeof(double)*Nj*Nk*Nl*Nm);
 #else
   double *q = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
   double *r = aligned_alloc(ALIGNMENT, sizeof(double)*Ni*Nj*Nk*Nl*Nm);
