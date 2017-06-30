@@ -9,15 +9,15 @@ Additionally we run a small reduction, requiring results of the Triad-style comp
 ## The kernel
 The main kernel consists of 8 multi-dimensional arrays with the following properties:
 
- * r and q are of size (small, medium, large)
- * x, y and z are of size (small, medium)
- * a, b, and c are of size (small)
+ * r and q are large
+ * x, y and z are medium
+ * a, b, and c are small
 
 The computational kernel is found inside a triple-nested loop, and can be expressed as
 
 ```
-r(i,j,k) = q(i,j,k) + a(i)*x(i,j) + b(i)*y(i,j) + c(i)*z(i,j)
-sum(j,k) = SUM(r(:,j,k))
+r(i,j,k,l,m) = q(i,j,k,l,m) + a(i)*x(i,j,k,m) + b(i)*y(i,j,l,m) + c(i)*z(i,k,l,m)
+sum(j,k,l,m) = SUM(r(:,j,k,l,m))
 ```
 
 ## Building
