@@ -101,14 +101,14 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
   implicit none
 
   integer :: nang, nx, ny, ng, nsweeps, chunk
-  real(kind=8), dimension(nang,nx,ny,nsweeps,ng) :: aflux0
-  real(kind=8), dimension(nang,nx,ny,nsweeps,ng) :: aflux1
-  real(kind=8), dimension(nx,ny,ng) :: sflux
-  real(kind=8), dimension(nang,chunk,ng) :: psii
-  real(kind=8), dimension(nang,nx,ng) :: psij
-  real(kind=8), dimension(nang) :: mu
-  real(kind=8), dimension(nang) :: eta
-  real(kind=8), dimension(nang) :: w
+  real(kind=8) :: aflux0(nang,nx,ny,nsweeps,ng)
+  real(kind=8) :: aflux1(nang,nx,ny,nsweeps,ng)
+  real(kind=8) :: sflux(nx,ny,ng)
+  real(kind=8) :: psii(nang,chunk,ng)
+  real(kind=8) :: psij(nang,nx,ng)
+  real(kind=8) :: mu(nang)
+  real(kind=8) :: eta(nang)
+  real(kind=8) :: w(nang)
   real(kind=8) :: v
 
   integer :: a, i, j, g, cj, sweep
