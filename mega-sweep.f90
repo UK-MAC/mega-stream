@@ -70,6 +70,9 @@ program megasweep
     print *
     print *, "Num. procs:", nprocs
     print *, "Mesh size:", nx, ny
+    print *, "Angles:", nang
+    print *, "Groups:", ng
+    print *, "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
   end if
 
   call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
