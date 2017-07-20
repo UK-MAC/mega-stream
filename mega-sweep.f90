@@ -28,6 +28,9 @@ program megasweep
   real(kind=8), dimension(:), allocatable :: w                  ! scalar flux weights
   real(kind=8) :: v                                             ! time constant
 
+  ! Timers
+  real(kind=8) :: time
+
   call MPI_Init_thread(MPI_THREAD_FUNNELED, mpi_thread_level, ierr)
   if (mpi_thread_level.LT.MPI_THREAD_FUNNELED) then
     print *, "Cannot provide MPI thread level"
@@ -75,10 +78,18 @@ program megasweep
     print *, "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
   end if
 
+  time = MPI_Wtime()
+
   call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
                aflux0,aflux1,sflux,          &
                psii,psij,                    &
                mu,eta,w,v)
+
+  time = MPI_Wtime() - time
+
+  if (rank.EQ.0) then
+    print *, "Runtime (s):", time
+  end if
 
   ! Free data
   deallocate(aflux0, aflux1)
