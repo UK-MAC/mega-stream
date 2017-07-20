@@ -37,6 +37,9 @@ mega-stream-omp4: mega-stream-omp4.c
 mega-stream-ftn: mega-stream.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) -align array64byte $(OMP) $^ -o $@
 
+mega-sweep: mega-sweep.f90
+	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
+
 .PHONY: clean
 
 clean:
