@@ -18,6 +18,7 @@ program megasweep
   integer :: lnx      ! local mesh size
   integer :: chunk    ! y chunk size
   integer :: nsweeps  ! sweep direction
+  integer :: ntimes   ! number of times
 
   ! Arrays
   real(kind=8), dimension(:,:,:,:,:), pointer :: aflux0, aflux1 ! angular flux
@@ -30,6 +31,9 @@ program megasweep
 
   ! Timers
   real(kind=8) :: time
+
+  ! Local variables
+  integer :: t
 
   call MPI_Init_thread(MPI_THREAD_FUNNELED, mpi_thread_level, ierr)
   if (mpi_thread_level.LT.MPI_THREAD_FUNNELED) then
@@ -48,6 +52,7 @@ program megasweep
   nang = 16
   nsweeps = 4
   chunk = 1
+  ntimes = 20
 
   ! Decompose in x-dimension
   if (mod(nx,nprocs).NE.0) then
@@ -80,10 +85,19 @@ program megasweep
 
   time = MPI_Wtime()
 
-  call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
-               aflux0,aflux1,sflux,          &
-               psii,psij,                    &
-               mu,eta,w,v)
+  do t = 1, ntimes
+
+    call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
+                 aflux0,aflux1,sflux,          &
+                 psii,psij,                    &
+                 mu,eta,w,v)
+
+    ! Swap pointers
+    aflux_ptr => aflux0
+    aflux0 => aflux1
+    aflux1 => aflux_ptr
+
+  end do
 
   time = MPI_Wtime() - time
 
