@@ -24,7 +24,9 @@ program megasweep
   real(kind=8), dimension(:,:,:,:,:), pointer :: aflux_ptr      ! for pointer swap
   real(kind=8), dimension(:,:,:), allocatable :: sflux          ! scalar flux
   real(kind=8), dimension(:), allocatable :: mu, eta            ! angular cosines
-  real(kind=8), dimension(:,:,:), allocatable :: psii, psij      ! edge angular flux
+  real(kind=8), dimension(:,:,:), allocatable :: psii, psij     ! edge angular flux
+  real(kind=8), dimension(:), allocatable :: w                  ! scalar flux weights
+  real(kind=8) :: v                                             ! time constant
 
   call MPI_Init_thread(MPI_THREAD_FUNNELED, mpi_thread_level, ierr)
   if (mpi_thread_level.LT.MPI_THREAD_FUNNELED) then
@@ -61,6 +63,7 @@ program megasweep
   allocate(eta(nang))
   allocate(psii(nang,chunk,ng))
   allocate(psij(nang,nx,ng))
+  allocate(w(nang))
 
   if (rank.EQ.0) then
     print *, "MEGA-SWEEP!"
@@ -69,26 +72,28 @@ program megasweep
     print *, "Mesh size:", nx, ny
   end if
 
-  call sweep(nang,lnx,ny,ng,nsweeps,chunk, &
-              aflux0,aflux1,sflux,          &
-              psii,psij,                    &
-              mu,eta)
+  call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
+               aflux0,aflux1,sflux,          &
+               psii,psij,                    &
+               mu,eta,w,v)
 
   ! Free data
   deallocate(aflux0, aflux1)
   deallocate(sflux)
   deallocate(mu, eta)
   deallocate(psii, psij)
+  deallocate(w)
 
   call MPI_Finalize(ierr)
 
 end program
 
 ! Sweep kernel
-subroutine sweep(nang,nx,ny,ng,nsweeps,chunk, &
-                 aflux0,aflux1,sflux,         &
-                 psii,psij,                   &
-                 mu,eta)
+subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
+                 aflux0,aflux1,sflux,           &
+                 psii,psij,                     &
+                 mu,eta,                        &
+                 w,v)
 
   implicit none
 
@@ -97,11 +102,39 @@ subroutine sweep(nang,nx,ny,ng,nsweeps,chunk, &
   real(kind=8) :: aflux1(nang,nx,ny,nsweeps,ng)
   real(kind=8) :: sflux(nx,ny,ng)
   real(kind=8) :: psii(nang,chunk,ng)
-  real(kind=8) :: psij(nang,ny,ng)
+  real(kind=8) :: psij(nang,nx,ng)
   real(kind=8) :: mu(nang)
   real(kind=8) :: eta(nang)
+  real(kind=8) :: w(nang)
+  real(kind=8) :: v
 
-  print *, shape(aflux0)
+  integer :: a, i, j, g, cj, sweep
+  integer :: xdir, ydir
+  real(kind=8) :: psi
 
-end subroutine sweep
+
+  do j = 1, ny, chunk
+    do g = 1, ng
+      do cj = 1, ny
+        do i = 1, nx
+          do a = 1, nang
+            ! Calculate angular flux
+            psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j,sweep,g)
+
+            ! Outgoing diamond difference
+            psii(a,cj,g) = 2.0_8*psi - psii(a,cj,g)
+            psij(a,i,g) = 2.0_8*psi - psij(a,i,g)
+            aflux1(a,i,j,sweep,g) = 2.0_8*psi - aflux0(a,i,j,sweep,g)
+
+            ! Reduction
+            sflux(i,j,g) = sflux(i,j,g) + psi*w(a)
+
+          end do ! angle loop
+        end do ! x loop
+      end do ! y chunk loop
+    end do ! group loop
+
+  end do ! chunk loop
+
+end subroutine sweeper
 
