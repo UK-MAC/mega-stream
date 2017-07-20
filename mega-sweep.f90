@@ -115,6 +115,7 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
   integer :: xdir, ydir
   real(kind=8) :: psi
 
+  sweep = 1
 
   do j = 1, ny, chunk
     do g = 1, ng
