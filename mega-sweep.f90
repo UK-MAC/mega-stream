@@ -56,13 +56,13 @@ program megasweep
   lnx = nx / nprocs
 
   ! Allocate data
-  allocate(aflux0(nang,nx,ny,nsweeps,ng))
-  allocate(aflux1(nang,nx,ny,nsweeps,ng))
-  allocate(sflux(nx,ny,ng))
+  allocate(aflux0(nang,lnx,ny,nsweeps,ng))
+  allocate(aflux1(nang,lnx,ny,nsweeps,ng))
+  allocate(sflux(lnx,ny,ng))
   allocate(mu(nang))
   allocate(eta(nang))
   allocate(psii(nang,chunk,ng))
-  allocate(psij(nang,nx,ng))
+  allocate(psij(nang,lnx,ng))
   allocate(w(nang))
 
   if (rank.EQ.0) then
