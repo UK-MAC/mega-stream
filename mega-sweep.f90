@@ -15,7 +15,7 @@ program megasweep
   ! Problem sizes
   integer :: nang, ng ! angles and groups
   integer :: nx, ny   ! global mesh size
-  integer :: lxy      ! local mesh size
+  integer :: lnx      ! local mesh size
   integer :: chunk    ! y chunk size
   integer :: nsweeps  ! sweep direction
 
@@ -51,7 +51,7 @@ program megasweep
     end if
     stop
   end if
-  lxy = nx / nprocs
+  lnx = nx / nprocs
 
   ! Allocate data
   allocate(aflux0(nang,nx,ny,nsweeps,ng))
@@ -69,6 +69,11 @@ program megasweep
     print *, "Mesh size:", nx, ny
   end if
 
+  call sweep(nang,lnx,ny,ng,nsweeps,chunk, &
+              aflux0,aflux1,sflux,          &
+              psii,psij,                    &
+              mu,eta)
+
   ! Free data
   deallocate(aflux0, aflux1)
   deallocate(sflux)
@@ -78,4 +83,25 @@ program megasweep
   call MPI_Finalize(ierr)
 
 end program
+
+! Sweep kernel
+subroutine sweep(nang,nx,ny,ng,nsweeps,chunk, &
+                 aflux0,aflux1,sflux,         &
+                 psii,psij,                   &
+                 mu,eta)
+
+  implicit none
+
+  integer :: nang, nx, ny, ng, nsweeps, chunk
+  real(kind=8) :: aflux0(nang,nx,ny,nsweeps,ng)
+  real(kind=8) :: aflux1(nang,nx,ny,nsweeps,ng)
+  real(kind=8) :: sflux(nx,ny,ng)
+  real(kind=8) :: psii(nang,chunk,ng)
+  real(kind=8) :: psij(nang,ny,ng)
+  real(kind=8) :: mu(nang)
+  real(kind=8) :: eta(nang)
+
+  print *, shape(aflux0)
+
+end subroutine sweep
 
