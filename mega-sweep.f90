@@ -115,7 +115,7 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
 
   do j = 1, ny, chunk
     do g = 1, ng
-      do cj = 1, ny
+      do cj = 1, chunk
         do i = 1, nx
           do a = 1, nang
             ! Calculate angular flux
