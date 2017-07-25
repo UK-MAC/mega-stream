@@ -78,7 +78,7 @@ program megasweep
   nang = 16
   nsweeps = 4
   chunk = 1
-  ntimes = 20
+  ntimes = 500
 
   ! Decompose in x-dimension
   if (mod(nx,nprocs).NE.0) then
@@ -121,6 +121,7 @@ program megasweep
     print *, "Angles:", nang
     print *, "Groups:", ng
     print *, "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
+    print *, "Num. times:", ntimes
     print *
   end if
 
