@@ -193,19 +193,58 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
   real(kind=8) :: v
 
   integer :: a, i, j, g, cj, sweep
-  integer :: xdir, ydir
+  integer :: istep, jstep, xmin, xmax, ymin, ymax, cmin, cmax
   real(kind=8) :: psi
 
   do sweep = 1, nsweeps
+    ! Set sweep directions
+    select case (sweep)
+      case (1)
+        istep = -1
+        xmin = nx
+        xmax = 1
+        jstep = -1
+        ymin = ny
+        ymax = 1
+        cmin = chunk
+        cmax = 1
+      case (2)
+        istep = 1
+        xmin = 1
+        xmax = nx
+        jstep = -1
+        ymin = ny
+        ymax = 1
+        cmin = chunk
+        cmax = 1
+      case (3)
+        istep = -1
+        xmin = nx
+        xmax = 1
+        jstep = 1
+        ymin = 1
+        ymax = ny
+        cmin = 1
+        cmax = chunk
+      case (4)
+        istep = 1
+        xmin = 1
+        xmax = nx
+        jstep = 1
+        ymin = 1
+        ymax = ny
+        cmin = 1
+        cmax = chunk
+    end select
 
-    do j = 1, ny, chunk
+    do j = ymin, ymax, chunk*jstep
       do g = 1, ng
-        do cj = 1, chunk
-          do i = 1, nx
+        do cj = cmin, cmax, jstep
+          do i = xmin, xmax, istep
             do a = 1, nang
               ! Calculate angular flux
               psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j+cj-1,sweep,g)
-  
+
               ! Outgoing diamond difference
               psii(a,cj,g) = 2.0_8*psi - psii(a,cj,g)
               psij(a,i,g) = 2.0_8*psi - psij(a,i,g)
@@ -213,12 +252,11 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
   
               ! Reduction
               sflux(i,j+cj-1,g) = sflux(i,j+cj-1,g) + psi*w(a)
-  
+
             end do ! angle loop
           end do ! x loop
         end do ! y chunk loop
       end do ! group loop
-  
     end do ! chunk loop
   end do ! sweep loop
 
