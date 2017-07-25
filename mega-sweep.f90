@@ -54,10 +54,12 @@ program megasweep
   real(kind=8) :: v                                             ! time constant
 
   ! Timers
-  real(kind=8) :: time
+  real(kind=8) :: start_time
+  real(kind=8), dimension(:), allocatable :: time
 
   ! Local variables
   integer :: t
+  real(kind=8) :: moved ! model of data movement
 
   call MPI_Init_thread(MPI_THREAD_FUNNELED, mpi_thread_level, ierr)
   if (mpi_thread_level.LT.MPI_THREAD_FUNNELED) then
@@ -97,6 +99,9 @@ program megasweep
   allocate(psij(nang,lnx,ng))
   allocate(w(nang))
 
+  ! Allocate timers
+  allocate(time(ntimes))
+
   if (rank.EQ.0) then
     print *, "MEGA-SWEEP!"
     print *
@@ -105,11 +110,13 @@ program megasweep
     print *, "Angles:", nang
     print *, "Groups:", ng
     print *, "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
+    print *
   end if
 
-  time = MPI_Wtime()
 
   do t = 1, ntimes
+
+    start_time = MPI_Wtime()
 
     call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
                  aflux0,aflux1,sflux,          &
@@ -121,12 +128,24 @@ program megasweep
     aflux0 => aflux1
     aflux1 => aflux_ptr
 
+    time(t) = MPI_Wtime() - start_time
+
   end do
 
-  time = MPI_Wtime() - time
+  ! Model data movement
+  moved = 8 * 1.0E-6 * (          &
+          nang*nx*ny*ng*nsweeps + & ! read aflux0
+          nang*nx*ny*ng*nsweeps + & ! write aflux1
+          nang + nang +           & ! read mu and eta
+          2.0*nang*ny*ng +        & ! read and write psii
+          2.0*nang*nx*ng +        & ! read and write psij
+          2.0*nx*ny*ng)             ! read and write sflux
+
 
   if (rank.EQ.0) then
-    print *, "Runtime (s):", time
+    print *, "Runtime (s):", sum(time)
+    print *, "Fastest sweep (s):", minval(time)
+    print *, "Bandwidth (MB/s):", moved/minval(time)
   end if
 
   ! Free data
@@ -135,6 +154,7 @@ program megasweep
   deallocate(mu, eta)
   deallocate(psii, psij)
   deallocate(w)
+  deallocate(time)
 
   call MPI_Finalize(ierr)
 
