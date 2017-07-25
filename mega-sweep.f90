@@ -99,6 +99,17 @@ program megasweep
   allocate(psij(nang,lnx,ng))
   allocate(w(nang))
 
+  ! Initilise data
+  aflux0 = 1.0_8
+  aflux1 = 0.0_8
+  sflux = 0.0_8
+  mu = 0.33_8
+  eta = 0.66_8
+  psii = 0.0_8
+  psij = 0.0_8
+  w = 0.4_8
+  v = 0.1_8
+
   ! Allocate timers
   allocate(time(ntimes))
 
