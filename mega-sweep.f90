@@ -195,7 +195,7 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
   integer :: xdir, ydir
   real(kind=8) :: psi
 
-  sweep = 1
+  do sweep = 1, nsweeps
 
   do j = 1, ny, chunk
     do g = 1, ng
@@ -203,15 +203,15 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
         do i = 1, nx
           do a = 1, nang
             ! Calculate angular flux
-            psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j,sweep,g)
+            psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j+cj-1,sweep,g)
 
             ! Outgoing diamond difference
             psii(a,cj,g) = 2.0_8*psi - psii(a,cj,g)
             psij(a,i,g) = 2.0_8*psi - psij(a,i,g)
-            aflux1(a,i,j,sweep,g) = 2.0_8*psi - aflux0(a,i,j,sweep,g)
+            aflux1(a,i,j+cj-1,sweep,g) = 2.0_8*psi - aflux0(a,i,j+cj-1,sweep,g)
 
             ! Reduction
-            sflux(i,j,g) = sflux(i,j,g) + psi*w(a)
+            sflux(i,j+cj-1,g) = sflux(i,j+cj-1,g) + psi*w(a)
 
           end do ! angle loop
         end do ! x loop
@@ -219,6 +219,7 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
     end do ! group loop
 
   end do ! chunk loop
+  end do ! sweep loop
 
 end subroutine sweeper
 
