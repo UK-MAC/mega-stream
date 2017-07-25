@@ -24,6 +24,8 @@ CFLAGS = -std=c11 -O3
 FTN = ifort
 FFLAGS = -O3
 
+MPI_FTN = mpiifort
+
 OMP = -qopenmp
 
 default: mega-stream
@@ -38,7 +40,7 @@ mega-stream-ftn: mega-stream.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) -align array64byte $(OMP) $^ -o $@
 
 mega-sweep: mega-sweep.f90
-	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
+	$(MPI_FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
 .PHONY: clean
 
