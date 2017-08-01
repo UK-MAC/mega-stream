@@ -201,6 +201,8 @@ subroutine sweeper(rank,lrank,rrank,            &
                    mu,eta,                      &
                    w,v)
 
+  use comms
+
   implicit none
 
   integer :: rank, lrank, rrank
@@ -260,7 +262,19 @@ subroutine sweeper(rank,lrank,rrank,            &
         cmax = chunk
     end select
 
+    ! Zero boundary data every sweep
+    psii = 0.0_8
+    psij = 0.0_8
+
     do j = ymin, ymax, chunk*jstep
+
+      ! Recv y boundary data for chunk
+      if (istep .eq. 1) then
+        call recv(psii, nang*chunk*ng, lrank)
+      else
+        call recv(psii, nang*chunk*ng, rrank)
+      end if
+
       do g = 1, ng
         do cj = cmin, cmax, jstep
           do i = xmin, xmax, istep

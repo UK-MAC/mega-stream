@@ -34,7 +34,6 @@ contains
     integer :: mpi_thread_level
     integer :: err
 
-    print *, "hello"
     call MPI_Init_thread(MPI_THREAD_FUNNELED, mpi_thread_level, err)
     if (mpi_thread_level.LT.MPI_THREAD_FUNNELED) then
       print *, "Cannot provide MPI thread level"
@@ -70,6 +69,28 @@ contains
     call MPI_Comm_size(MPI_COMM_WORLD, nprocs, err)
 
   end subroutine comms_size
+
+  ! Receive 3D array
+  subroutine recv(array,num,from)
+
+    real(kind=8) :: array(:,:,:)
+    integer, intent(in) :: num, from
+    integer :: err
+
+    call MPI_Recv(array, num, MPI_REAL8, from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, err)
+
+  end subroutine recv
+
+  ! Send 3D array
+  subroutine send(array,num,to)
+
+    real(kind=8) :: array(:,:,:)
+    integer, intent(in) :: num, to
+    integer :: err
+
+    call MPI_Send(array, num, MPI_REAL8, to, 0, MPI_COMM_WORLD, err)
+
+  end subroutine send
 
 end module comms
 
