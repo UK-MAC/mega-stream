@@ -77,6 +77,14 @@ program megasweep
   ! Read in command line arguments
   call parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
 
+  ! Check ny is split into even number of chunks
+  if (mod(ny,chunk) .ne. 0) then
+    if (rank .eq. 0) then
+      print *, "Chunk size must divide ny"
+    end if
+    stop
+  end if
+
   ! Decompose in x-dimension
   if (mod(nx,nprocs).NE.0) then
     if (rank.EQ.0) then
