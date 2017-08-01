@@ -120,12 +120,16 @@ program megasweep
   if (rank.EQ.0) then
     write(*,'(a)') "MEGA-SWEEP!"
     write(*,*)
-    write(*,'(a,i)')     "Num. procs:         ", nprocs
-    write(*,'(a,i,a,i)') "Mesh size:          ", nx, " x", ny
-    write(*,'(a,i)')     "Angles:             ", nang
-    write(*,'(a,i)')     "Groups:             ", ng
-    write(*,'(a,i)')     "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
-    write(*,'(a,i)')     "Num. times:         ", ntimes
+    write(*,'(a)') "Input"
+    write(*,'(1x,a,i,a,i)') "Mesh size:          ", nx, " x", ny
+    write(*,'(1x,a,i)')     "Angles:             ", nang
+    write(*,'(1x,a,i)')     "Groups:             ", ng
+    write(*,'(1x,a,i)')     "Num. times:         ", ntimes
+    write(*,*)
+    write(*,'(a)') "Runtime info"
+    write(*,'(1x,a,i)')     "Num. procs:         ", nprocs
+    write(*,'(1x,a,f12.1)') "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
+    write(*,'(1x,a,f12.1)') "Flux size/rank (MB):", 8.0_8*(nang*lnx*ny*nsweeps*ng)/2.0_8**20
     write(*,*)
   end if
 
