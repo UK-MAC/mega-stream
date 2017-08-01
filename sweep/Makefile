@@ -25,7 +25,7 @@ OMP = -qopenmp
 
 default: mega-sweep
 
-mega-sweep: mega-sweep.f90
+mega-sweep: mega-sweep.f90 comms.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
 .PHONY: clean

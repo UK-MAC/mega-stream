@@ -25,16 +25,13 @@ program megasweep
 
   ! MEGA-SWEEP adds a KBA sweep along with the MPI communication to the MEGA-STREAM kernel
 
-  use mpi
+  use comms
 
   implicit none
 
   ! MPI variables
-  integer :: mpi_thread_level
-  integer :: ierr
   integer :: rank, nprocs
   integer :: lrank, rrank ! neighbour ranks
-  integer :: comm
 
 
   ! Problem sizes
@@ -63,15 +60,10 @@ program megasweep
   integer :: t
   real(kind=8) :: moved ! model of data movement
 
-  call MPI_Init_thread(MPI_THREAD_FUNNELED, mpi_thread_level, ierr)
-  if (mpi_thread_level.LT.MPI_THREAD_FUNNELED) then
-    print *, "Cannot provide MPI thread level"
-    stop
-  end if
+  call comms_init
 
-  comm = MPI_COMM_WORLD
-  call MPI_Comm_rank(comm, rank, ierr)
-  call MPI_Comm_size(comm, nprocs, ierr)
+  call comms_rank(rank)
+  call comms_size(nprocs)
 
   ! Set default problem sizes
   nx = 128
@@ -152,7 +144,8 @@ program megasweep
 
     timer = MPI_Wtime()
 
-    call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
+    call sweeper(rank,lrank,rrank,             &
+                 nang,lnx,ny,ng,nsweeps,chunk, &
                  aflux0,aflux1,sflux,          &
                  psii,psij,                    &
                  mu,eta,w,v)
@@ -196,19 +189,21 @@ program megasweep
   deallocate(w)
   deallocate(time)
 
-  call MPI_Finalize(ierr)
+  call comms_finalize
 
 end program
 
 ! Sweep kernel
-subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
-                 aflux0,aflux1,sflux,           &
-                 psii,psij,                     &
-                 mu,eta,                        &
-                 w,v)
+subroutine sweeper(rank,lrank,rrank,            &
+                   nang,nx,ny,ng,nsweeps,chunk, &
+                   aflux0,aflux1,sflux,         &
+                   psii,psij,                   &
+                   mu,eta,                      &
+                   w,v)
 
   implicit none
 
+  integer :: rank, lrank, rrank
   integer :: nang, nx, ny, ng, nsweeps, chunk
   real(kind=8) :: aflux0(nang,nx,ny,nsweeps,ng)
   real(kind=8) :: aflux1(nang,nx,ny,nsweeps,ng)
