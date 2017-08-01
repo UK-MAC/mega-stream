@@ -1,3 +1,6 @@
-mega-stream
+baseline/mega-stream
+baseline/mega-stream-ftn
+optimised/mega-stream
+optimised/mega-stream-ftn
 mega-sweep
-
+.DS_Store

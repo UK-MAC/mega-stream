@@ -33,9 +33,6 @@ default: mega-stream
 mega-stream: mega-stream.c
 	$(CC) $(CFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
-mega-stream-omp4: mega-stream-omp4.c
-	cc -hstd=c99 -O3 $^ -o $@
-
 mega-stream-ftn: mega-stream.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) -align array64byte $(OMP) $^ -o $@
 
@@ -45,4 +42,5 @@ mega-sweep: mega-sweep.f90
 .PHONY: clean
 
 clean:
-	rm -f mega-stream mega-stream-omp4 mega-stream-ftn
+	rm -f mega-stream mega-stream-ftn
+
