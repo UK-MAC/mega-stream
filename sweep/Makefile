@@ -33,7 +33,7 @@ OMP_GNU = -fopenmp
 
 ifdef DEBUG
   FFLAGS_GNU = -g -fcheck=all
-  FFLAGS_INTL = -g -debug all -traceback
+  FFLAGS_INTEL = -g -debug all -traceback
 endif
 
 # Choose compiler
