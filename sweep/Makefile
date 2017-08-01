@@ -31,6 +31,11 @@ FTN_GNU = mpif90
 FFLAGS_GNU = -O3
 OMP_GNU = -fopenmp
 
+ifdef DEBUG
+  FFLAGS_GNU = -g -fcheck=all
+  FFLAGS_INTL = -g -debug all -traceback
+endif
+
 # Choose compiler
 FTN=$(FTN_$(COMPILER))
 FFLAGS=$(FFLAGS_$(COMPILER))
