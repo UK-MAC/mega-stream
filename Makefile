@@ -22,7 +22,7 @@ CC = icc
 CFLAGS = -std=c11 -O3
 
 FTN = ifort
-FFLAGS = -O3
+FFLAGS = -O3 -align array256byte -xHost -qopt-report=5
 
 MPI_FTN = mpiifort
 
