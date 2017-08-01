@@ -115,15 +115,15 @@ program megasweep
   allocate(time(ntimes))
 
   if (rank.EQ.0) then
-    print *, "MEGA-SWEEP!"
-    print *
-    print *, "Num. procs:", nprocs
-    print *, "Mesh size:", nx, ny
-    print *, "Angles:", nang
-    print *, "Groups:", ng
-    print *, "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
-    print *, "Num. times:", ntimes
-    print *
+    write(*,'(a)') "MEGA-SWEEP!"
+    write(*,*)
+    write(*,'(a,i)')     "Num. procs:         ", nprocs
+    write(*,'(a,i,a,i)') "Mesh size:          ", nx, " x", ny
+    write(*,'(a,i)')     "Angles:             ", nang
+    write(*,'(a,i)')     "Groups:             ", ng
+    write(*,'(a,i)')     "Flux size/rank (MB):", (nang*lnx*ny*nsweeps*ng*8)/2**20
+    write(*,'(a,i)')     "Num. times:         ", ntimes
+    write(*,*)
   end if
 
 
@@ -158,12 +158,14 @@ program megasweep
 
 
   if (rank.EQ.0) then
+    write(*,"(a)")   "Summary"
     write(*,"(a,e)") "Fastest sweep (s):       ", minval(time(2:))
     write(*,"(a,e)") "Slowest sweep (s):       ", maxval(time(2:))
     write(*,"(a,e)") "Runtime (s):             ", end_time-start_time
     write(*,*)
     write(*,"(a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
     write(*,"(a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
+    write(*,*)
   end if
 
   ! Free data
