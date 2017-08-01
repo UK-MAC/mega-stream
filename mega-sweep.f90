@@ -249,6 +249,7 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
       do g = 1, ng
         do cj = cmin, cmax, jstep
           do i = xmin, xmax, istep
+!dir$ vector nontemporal(aflux1)
             do a = 1, nang
               ! Calculate angular flux
               psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j+cj-1,sweep,g)
