@@ -54,7 +54,8 @@ program megasweep
   real(kind=8) :: v                                             ! time constant
 
   ! Timers
-  real(kind=8) :: start_time
+  real(kind=8) :: start_time, end_time
+  real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
 
   ! Local variables
@@ -126,9 +127,10 @@ program megasweep
   end if
 
 
+  start_time = MPI_Wtime()
   do t = 1, ntimes
 
-    start_time = MPI_Wtime()
+    timer = MPI_Wtime()
 
     call sweeper(nang,lnx,ny,ng,nsweeps,chunk, &
                  aflux0,aflux1,sflux,          &
@@ -140,9 +142,10 @@ program megasweep
     aflux0 => aflux1
     aflux1 => aflux_ptr
 
-    time(t) = MPI_Wtime() - start_time
+    time(t) = MPI_Wtime() - timer
 
   end do
+  end_time = MPI_Wtime()
 
   ! Model data movement
   moved = 8 * 1.0E-6 * (          &
@@ -155,9 +158,10 @@ program megasweep
 
 
   if (rank.EQ.0) then
-    print *, "Runtime (s):", sum(time)
+    print *, "Runtime (s):", end_time-start_time
     print *, "Fastest sweep (s):", minval(time(2:))
-    print *, "Bandwidth (MB/s):", moved/minval(time(2:))
+    print *, "Slowest sweep (s):", maxval(time(2:))
+    print *, "Sustainted bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
   end if
 
   ! Free data
