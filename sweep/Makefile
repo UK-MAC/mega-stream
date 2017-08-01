@@ -17,11 +17,24 @@
 # along with mega-stream.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Default compiler and flags
+FTN_ = mpif90
+FFLAGS_ = -O3
 
-FTN = mpiifort
-FFLAGS = -O3 -xHost -align array256byte -qopt-report=5
+# Intel settings
+FTN_INTEL = mpiifort
+FFLAGS_INTEL = -O3 -xHost -align array256byte -qopt-report=5
+OMP_INTEL = -qopenmp
 
-OMP = -qopenmp
+# GNU settings
+FTN_GNU = mpif90
+FFLAGS_GNU = -O3
+OMP_GNU = -fopenmp
+
+# Choose compiler
+FTN=$(FTN_$(COMPILER))
+FFLAGS=$(FFLAGS_$(COMPILER))
+OMP=$(OMP_$(COMPILER))
 
 default: mega-sweep
 
