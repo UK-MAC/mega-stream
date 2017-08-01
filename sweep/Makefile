@@ -43,7 +43,7 @@ OMP=$(OMP_$(COMPILER))
 
 default: mega-sweep
 
-mega-sweep: comms.f90 mega-sweep.f90
+mega-sweep: comms.f90 kernel.f90 mega-sweep.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
 .PHONY: clean
