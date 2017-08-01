@@ -72,7 +72,7 @@ program megasweep
   call MPI_Comm_rank(comm, rank, ierr)
   call MPI_Comm_size(comm, nprocs, ierr)
 
-  ! Set problem sizes
+  ! Set default problem sizes
   nx = 128
   ny = 128
   ng = 16
@@ -80,6 +80,9 @@ program megasweep
   nsweeps = 4
   chunk = 1
   ntimes = 500
+
+  ! Read in command line arguments
+  call parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
 
   ! Decompose in x-dimension
   if (mod(nx,nprocs).NE.0) then
@@ -270,4 +273,71 @@ subroutine sweeper(nang,nx,ny,ng,nsweeps,chunk, &
   end do ! sweep loop
 
 end subroutine sweeper
+
+
+subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
+
+  implicit none
+
+  integer, intent(in)   :: rank
+  integer, intent(inout) :: nang, nx, ny, ng, chunk, ntimes
+
+  character(len=32) :: arg
+
+  integer :: i = 1
+
+  do while (i <= iargc())
+    call getarg(i, arg)
+    IF (arg .eq. "--nang") then
+      i = i + 1
+      call getarg(i, arg)
+      read(arg, *) nang
+    else if (arg .eq. "--ng") then
+      i = i + 1
+      call getarg(i, arg)
+      read(arg, *) ng
+    ELSE IF (arg .eq. "--nx") then
+      i = i + 1
+      call getarg(i, arg)
+      read(arg, *) nx
+    else if (arg .eq. "--ny") then
+      i = i + 1
+      call getarg(i, arg)
+      read(arg, *) ny
+    else if (arg .eq. "--chunk") then
+      i = i + 1
+      call getarg(i, arg)
+      read(arg, *) chunk
+    else if (arg .eq. "--ntimes") then
+      i = i + 1
+      call getarg(i, arg)
+      read(arg, *) ntimes
+    else if (arg .eq. "--help") then
+      if (rank .eq. 0) then
+        write(*, *) "--nang   n  Set number of angles"
+        write(*, *) "--ng     n  Set number of groups"
+        write(*, *) "--nx     n  Set number of cells in x dimension"
+        write(*, *) "--ny     n  Set number of cells in y dimension"
+        write(*, *) "--chunk  n  Set y-dimension chunk size"
+        write(*, *) "--ntimes n  Run the benchmark n times"
+        write(*, *)
+        write(*, *) "Default sizes"
+        write(*, '(2x,a,i)') "nang: ", nang
+        write(*, '(2x,a,i)') "ng:   ", ng
+        write(*, '(2x,a,i)') "nx:   ", nx
+        write(*, '(2x,a,i)') "ny:   ", ny
+        write(*, '(2x,a,i)') "chunk:", chunk
+      end if
+      stop
+    else
+      if (rank .eq. 0) then
+        write(*, *) "Unrecognised argument ", arg
+        write(*, *)
+      end if
+      stop
+    end if
+    i = i + 1
+  end do
+
+end subroutine
 
