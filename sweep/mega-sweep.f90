@@ -295,6 +295,14 @@ subroutine sweeper(rank,lrank,rrank,            &
           end do ! x loop
         end do ! y chunk loop
       end do ! group loop
+
+      ! Send y boundary data for chunk
+      if (istep .eq. 1) then
+        call send(psii, nang*chunk*ng, rrank)
+      else
+        call send(psii, nang*chunk*ng, lrank)
+      end if
+
     end do ! chunk loop
   end do ! sweep loop
 
