@@ -26,6 +26,9 @@ module comms
 
   implicit none
 
+  ! MPI Send request
+  integer :: send_request
+
 contains
 
   ! Init MPI
@@ -39,6 +42,9 @@ contains
       print *, "Cannot provide MPI thread level"
       stop
     end if
+
+    ! Set request to NULL
+    send_request = MPI_REQUEST_NULL
   end subroutine comms_init
 
   ! Finalize MPI
@@ -88,7 +94,11 @@ contains
     integer, intent(in) :: num, to
     integer :: err
 
-    call MPI_Send(array, num, MPI_REAL8, to, 0, MPI_COMM_WORLD, err)
+    ! Wait for previous send
+    call MPI_Wait(send_request, MPI_STATUS_IGNORE, err)
+
+    ! Then send
+    call MPI_Isend(array, num, MPI_REAL8, to, 0, MPI_COMM_WORLD, send_request, err)
 
   end subroutine send
 
