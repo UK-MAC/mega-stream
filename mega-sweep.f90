@@ -158,11 +158,12 @@ program megasweep
 
 
   if (rank.EQ.0) then
-    print *, "Runtime (s):", end_time-start_time
-    print *, "Fastest sweep (s):", minval(time(2:))
-    print *, "Best bandwidth (MB/s):", moved/minval(time(2:))
-    print *, "Slowest sweep (s):", maxval(time(2:))
-    print *, "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
+    write(*,"(a,e)") "Fastest sweep (s):       ", minval(time(2:))
+    write(*,"(a,e)") "Slowest sweep (s):       ", maxval(time(2:))
+    write(*,"(a,e)") "Runtime (s):             ", end_time-start_time
+    write(*,*)
+    write(*,"(a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
+    write(*,"(a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
   end if
 
   ! Free data
