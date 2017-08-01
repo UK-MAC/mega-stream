@@ -126,13 +126,13 @@ program megasweep
     write(*,'(a)') "MEGA-SWEEP!"
     write(*,*)
     write(*,'(a)') "Input"
-    write(*,'(1x,a,i,a,i)') "Mesh size:          ", nx, " x", ny
-    write(*,'(1x,a,i)')     "Angles:             ", nang
-    write(*,'(1x,a,i)')     "Groups:             ", ng
-    write(*,'(1x,a,i)')     "Num. times:         ", ntimes
+    write(*,'(1x,a,i0,a,i0)') "Mesh size:          ", nx, " x", ny
+    write(*,'(1x,a,i0)')     "Angles:             ", nang
+    write(*,'(1x,a,i0)')     "Groups:             ", ng
+    write(*,'(1x,a,i0)')     "Num. times:         ", ntimes
     write(*,*)
     write(*,'(a)') "Runtime info"
-    write(*,'(1x,a,i)')     "Num. procs:         ", nprocs
+    write(*,'(1x,a,i0)')     "Num. procs:         ", nprocs
     write(*,'(1x,a,f12.1)') "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
     write(*,'(1x,a,f12.1)') "Flux size/rank (MB):", 8.0_8*(nang*lnx*ny*nsweeps*ng)/2.0_8**20
     write(*,*)
@@ -172,9 +172,9 @@ program megasweep
 
   if (rank.EQ.0) then
     write(*,"(a)")   "Summary"
-    write(*,"(1x,a,f)") "Fastest sweep (s):       ", minval(time(2:))
-    write(*,"(1x,a,f)") "Slowest sweep (s):       ", maxval(time(2:))
-    write(*,"(1x,a,f)") "Runtime (s):             ", end_time-start_time
+    write(*,"(1x,a,f12.9)") "Fastest sweep (s):       ", minval(time(2:))
+    write(*,"(1x,a,f12.9)") "Slowest sweep (s):       ", maxval(time(2:))
+    write(*,"(1x,a,f12.9)") "Runtime (s):             ", end_time-start_time
     write(*,*)
     write(*,"(1x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
     write(*,"(1x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
@@ -348,11 +348,11 @@ subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
         write(*, *) "--ntimes n  Run the benchmark n times"
         write(*, *)
         write(*, *) "Default sizes"
-        write(*, '(2x,a,i)') "nang: ", nang
-        write(*, '(2x,a,i)') "ng:   ", ng
-        write(*, '(2x,a,i)') "nx:   ", nx
-        write(*, '(2x,a,i)') "ny:   ", ny
-        write(*, '(2x,a,i)') "chunk:", chunk
+        write(*, '(2x,a,i0)') "nang: ", nang
+        write(*, '(2x,a,i0)') "ng:   ", ng
+        write(*, '(2x,a,i0)') "nx:   ", nx
+        write(*, '(2x,a,i0)') "ny:   ", ny
+        write(*, '(2x,a,i0)') "chunk:", chunk
       end if
       stop
     else
