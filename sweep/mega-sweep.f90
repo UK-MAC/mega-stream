@@ -33,6 +33,7 @@ program megasweep
   integer :: mpi_thread_level
   integer :: ierr
   integer :: rank, nprocs
+  integer :: lrank, rrank ! neighbour ranks
   integer :: comm
 
 
@@ -92,6 +93,18 @@ program megasweep
     stop
   end if
   lnx = nx / nprocs
+
+  ! Set neighbour ranks
+  if (rank .ne. 0) then
+    lrank = rank - 1
+  else
+    lrank = MPI_PROC_NULL
+  end if
+  if (rank .ne. nprocs-1) then
+    rrank = rank + 1
+  else
+    rrank = MPI_PROC_NULL
+  end if
 
   ! Allocate data
   allocate(aflux0(nang,lnx,ny,nsweeps,ng))
