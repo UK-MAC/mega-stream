@@ -22,9 +22,7 @@ CC = icc
 CFLAGS = -std=c11 -O3
 
 FTN = ifort
-FFLAGS = -O3 -align array256byte -xHost -qopt-report=5
-
-MPI_FTN = mpiifort
+FFLAGS = -O3
 
 OMP = -qopenmp
 
@@ -35,9 +33,6 @@ mega-stream: mega-stream.c
 
 mega-stream-ftn: mega-stream.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) -align array64byte $(OMP) $^ -o $@
-
-mega-sweep: mega-sweep.f90
-	$(MPI_FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
 .PHONY: clean
 
