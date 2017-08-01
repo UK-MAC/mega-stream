@@ -30,5 +30,5 @@ mega-sweep: comms.f90 mega-sweep.f90
 
 .PHONY: clean
 clean:
-	rm -f mega-sweep
+	rm -f mega-sweep comms.mod
 
