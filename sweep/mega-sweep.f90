@@ -166,12 +166,12 @@ program megasweep
 
   if (rank.EQ.0) then
     write(*,"(a)")   "Summary"
-    write(*,"(a,e)") "Fastest sweep (s):       ", minval(time(2:))
-    write(*,"(a,e)") "Slowest sweep (s):       ", maxval(time(2:))
-    write(*,"(a,e)") "Runtime (s):             ", end_time-start_time
+    write(*,"(1x,a,f)") "Fastest sweep (s):       ", minval(time(2:))
+    write(*,"(1x,a,f)") "Slowest sweep (s):       ", maxval(time(2:))
+    write(*,"(1x,a,f)") "Runtime (s):             ", end_time-start_time
     write(*,*)
-    write(*,"(a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
-    write(*,"(a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
+    write(*,"(1x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
+    write(*,"(1x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
     write(*,*)
   end if
 
