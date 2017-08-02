@@ -45,9 +45,16 @@ subroutine sweeper(rank,lrank,rrank,            &
   real(kind=8) :: w(nang)
   real(kind=8) :: v
 
-  integer :: a, i, j, g, cj, sweep
-  integer :: istep, jstep, xmin, xmax, ymin, ymax, cmin, cmax
+  integer :: a, i, j, g, c, cj, sweep
+  integer :: istep, jstep ! Spatial step direction
+  integer :: xmin, xmax   ! x-dimension loop bounds
+  integer :: ymin, ymax   ! y-dimensio (chunk) loop bounds
+  integer :: cmin, cmax   ! Chunk loop bounds
+  integer :: nchunks
   real(kind=8) :: psi
+
+  ! Calculate number of chunks in y-dimension
+  nchunks = ny / chunk
 
   do sweep = 1, nsweeps
     ! Set sweep directions
@@ -57,18 +64,18 @@ subroutine sweeper(rank,lrank,rrank,            &
         xmin = nx
         xmax = 1
         jstep = -1
-        ymin = ny
+        ymin = chunk
         ymax = 1
-        cmin = chunk
+        cmin = nchunks
         cmax = 1
       case (2)
         istep = 1
         xmin = 1
         xmax = nx
         jstep = -1
-        ymin = ny
+        ymin = chunk
         ymax = 1
-        cmin = chunk
+        cmin = nchunks
         cmax = 1
       case (3)
         istep = -1
@@ -76,25 +83,25 @@ subroutine sweeper(rank,lrank,rrank,            &
         xmax = 1
         jstep = 1
         ymin = 1
-        ymax = ny
+        ymax = chunk
         cmin = 1
-        cmax = chunk
+        cmax = nchunks
       case (4)
         istep = 1
         xmin = 1
         xmax = nx
         jstep = 1
         ymin = 1
-        ymax = ny
+        ymax = chunk
         cmin = 1
-        cmax = chunk
+        cmax = nchunks
     end select
 
     ! Zero boundary data every sweep
     psii = 0.0_8
     psij = 0.0_8
 
-    do j = ymin, ymax, chunk*jstep
+    do c = cmin, cmax, jstep ! Loop over chunks
 
       ! Recv y boundary data for chunk
       if (istep .eq. 1) then
@@ -103,21 +110,23 @@ subroutine sweeper(rank,lrank,rrank,            &
         call recv(psii, nang*chunk*ng, rrank)
       end if
 
-      do g = 1, ng
-        do cj = cmin, cmax, jstep
-          do i = xmin, xmax, istep
+      do g = 1, ng                 ! Loop over energy groups
+        do cj = ymin, ymax, jstep  ! Loop over cells in chunk (y-dimension)
+          ! Calculate y index with respect to ny
+          j = (c-1)*chunk + cj
+          do i = xmin, xmax, istep ! Loop over x-dimension
 !dir$ vector nontemporal(aflux1)
-            do a = 1, nang
+            do a = 1, nang         ! Loop over angles
               ! Calculate angular flux
-              psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j+cj-1,sweep,g)
+              psi = mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j,sweep,g)
 
               ! Outgoing diamond difference
               psii(a,cj,g) = 2.0_8*psi - psii(a,cj,g)
               psij(a,i,g) = 2.0_8*psi - psij(a,i,g)
-              aflux1(a,i,j+cj-1,sweep,g) = 2.0_8*psi - aflux0(a,i,j+cj-1,sweep,g)
+              aflux1(a,i,j,sweep,g) = 2.0_8*psi - aflux0(a,i,j,sweep,g)
   
               ! Reduction
-              sflux(i,j+cj-1,g) = sflux(i,j+cj-1,g) + psi*w(a)
+              sflux(i,j,g) = sflux(i,j,g) + psi*w(a)
 
             end do ! angle loop
           end do ! x loop
