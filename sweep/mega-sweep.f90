@@ -184,6 +184,8 @@ program megasweep
     write(*,"(1x,a,f12.9)") "Slowest sweep (s):       ", maxval(time(2:))
     write(*,"(1x,a,f12.9)") "Runtime (s):             ", end_time-start_time
     write(*,*)
+    write(*,"(1x,a,f12.2)") "Estimate moved (MB):     ", moved
+    write(*,*)
     write(*,"(1x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
     write(*,"(1x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
     write(*,*)
