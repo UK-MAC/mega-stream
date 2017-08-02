@@ -134,15 +134,17 @@ program megasweep
     write(*,'(a)') "MEGA-SWEEP!"
     write(*,*)
     write(*,'(a)') "Input"
-    write(*,'(1x,a,i0,a,i0)') "Mesh size:          ", nx, " x", ny
-    write(*,'(1x,a,i0)')     "Angles:             ", nang
-    write(*,'(1x,a,i0)')     "Groups:             ", ng
-    write(*,'(1x,a,i0)')     "Num. times:         ", ntimes
+    write(*,'(1x,a,i0,1x,a,1x,i0)') "Mesh size:          ", nx, "x", ny
+    write(*,'(1x,a,i0)')      "Angles:             ", nang
+    write(*,'(1x,a,i0)')      "Groups:             ", ng
+    write(*,'(1x,a,i0)')      "Chunk:              ", chunk
+    write(*,'(1x,a,i0)')      "Num. times:         ", ntimes
     write(*,*)
     write(*,'(a)') "Runtime info"
-    write(*,'(1x,a,i0)')     "Num. procs:         ", nprocs
-    write(*,'(1x,a,f12.1)') "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
-    write(*,'(1x,a,f12.1)') "Flux size/rank (MB):", 8.0_8*(nang*lnx*ny*nsweeps*ng)/2.0_8**20
+    write(*,'(1x,a,i0)')      "Num. procs:         ", nprocs
+    write(*,'(1x,a,i0,1x,a,1x,i0)') "Sub-domain size:    ", lnx, "x", ny
+    write(*,'(1x,a,f12.1)')   "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
+    write(*,'(1x,a,f12.1)')   "Flux size/rank (MB):", 8.0_8*(nang*lnx*ny*nsweeps*ng)/2.0_8**20
     write(*,*)
   end if
 
