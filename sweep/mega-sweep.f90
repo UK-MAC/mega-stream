@@ -169,13 +169,13 @@ program megasweep
   end_time = MPI_Wtime()
 
   ! Model data movement
-  moved = 8 * 1.0E-6 * (          &
-          nang*nx*ny*ng*nsweeps + & ! read aflux0
-          nang*nx*ny*ng*nsweeps + & ! write aflux1
-          nang + nang +           & ! read mu and eta
-          2.0*nang*ny*ng +        & ! read and write psii
-          2.0*nang*nx*ng +        & ! read and write psij
-          2.0*nx*ny*ng)             ! read and write sflux
+  moved = 8.0 * 1.0E-6 * (            &
+          1.0*nang*nx*ny*ng*nsweeps + & ! read aflux0
+          1.0*nang*nx*ny*ng*nsweeps + & ! write aflux1
+          nang + nang +               & ! read mu and eta
+          2.0*nang*ny*ng +            & ! read and write psii
+          2.0*nang*nx*ng +            & ! read and write psij
+          2.0*nx*ny*ng)                 ! read and write sflux
 
 
   if (rank.EQ.0) then
