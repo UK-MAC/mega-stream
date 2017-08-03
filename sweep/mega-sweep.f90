@@ -86,14 +86,16 @@ program megasweep
   end if
 
   ! Decompose in x-dimension
-  if (mod(nx,nprocs).NE.0) then
-    if (rank.EQ.0) then
-      print *, "Number of ranks must divide nx"
-    end if
-    stop
-  end if
   lnx = nx / nprocs
 
+  ! Share remainder cells for uneven decomposition 
+  ! Allows for flexible process counts
+  if (mod(nx,nprocs) .ne. 0) then
+    if (rank .lt. mod(nx,nprocs)) then
+      lnx = lnx + 1
+    end if
+  end if
+    
   ! Set neighbour ranks
   if (rank .ne. 0) then
     lrank = rank - 1
@@ -142,7 +144,12 @@ program megasweep
     write(*,*)
     write(*,'(a)') "Runtime info"
     write(*,'(1x,a,i0)')      "Num. procs:         ", nprocs
-    write(*,'(1x,a,i0,1x,a,1x,i0)') "Sub-domain size:    ", lnx, "x", ny
+    if (mod(nx,nprocs) .eq. 0) then
+      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a)') "Sub-domain size:    ", lnx, "x", ny, "(all ranks)"
+    else
+      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", lnx, "x", ny, "(", mod(nx,nprocs), "ranks)"
+      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx/nprocs, "x", ny, "(", nprocs-mod(nx,nprocs), "ranks)"
+    end if
     write(*,'(1x,a,f12.1)')   "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
     write(*,'(1x,a,f12.1)')   "Flux size/rank (MB):", 8.0_8*(nang*lnx*ny*nsweeps*ng)/2.0_8**20
     write(*,*)
