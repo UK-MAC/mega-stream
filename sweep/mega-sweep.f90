@@ -189,8 +189,8 @@ program megasweep
 
   if (rank.EQ.0) then
     write(*,"(a)")   "Summary"
-    write(*,"(1x,a,f12.9)") "Fastest sweep (s):       ", minval(time(2:))
-    write(*,"(1x,a,f12.9)") "Slowest sweep (s):       ", maxval(time(2:))
+    write(*,"(1x,a,f12.9)") "Fastest iteration (s):   ", minval(time(2:))
+    write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
     write(*,"(1x,a,f12.9)") "Runtime (s):             ", end_time-start_time
     write(*,*)
     write(*,"(1x,a,f12.2)") "Estimate moved (MB):     ", moved
