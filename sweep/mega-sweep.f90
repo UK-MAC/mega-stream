@@ -223,7 +223,7 @@ subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
 
   integer :: i = 1
 
-  do while (i <= iargc())
+  do while (i <= command_argument_count())
     call getarg(i, arg)
     IF (arg .eq. "--nang") then
       i = i + 1
