@@ -28,11 +28,11 @@ OMP_INTEL = -qopenmp
 
 # GNU settings
 FTN_GNU = mpif90
-FFLAGS_GNU = -O3
+FFLAGS_GNU = -O3 -ffree-line-length-none
 OMP_GNU = -fopenmp
 
 ifdef DEBUG
-  FFLAGS_GNU = -g -fcheck=all
+  FFLAGS_GNU = -ffree-line-length-none -g -fcheck=all
   FFLAGS_INTEL = -g -debug all -traceback
 endif
 
