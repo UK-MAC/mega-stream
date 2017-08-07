@@ -37,8 +37,8 @@ program megasweep
   ! Problem sizes
   integer :: nang, ng ! angles and groups
   integer :: nx, ny   ! global mesh size
-  integer :: lnx      ! local mesh size
-  integer :: chunk    ! y chunk size
+  integer :: lnx, lny ! local mesh size
+  integer :: chunk    ! chunk size
   integer :: nsweeps  ! sweep direction
   integer :: ntimes   ! number of times
 
@@ -58,6 +58,7 @@ program megasweep
 
   ! Local variables
   integer :: t
+  logical :: ydecomp = .false.
   real(kind=8) :: moved ! model of data movement
 
   call comms_init
@@ -75,7 +76,7 @@ program megasweep
   ntimes = 500
 
   ! Read in command line arguments
-  call parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
+  call parse_args(rank,nang,nx,ny,ng,chunk,ntimes,ydecomp)
 
   ! Check ny is split into even number of chunks
   if (mod(ny,chunk) .ne. 0) then
@@ -85,20 +86,43 @@ program megasweep
     stop
   end if
 
-  ! Decompose in x-dimension
-  if (nprocs .gt. nx) then
-    if (rank .eq. 0) then
-      print *, "Too many processors for mesh size"
+  if (ydecomp) then
+    ! Decompose in y-dimension
+    if (nprocs .gt. ny) then
+      if (rank .eq. 0) then
+        print *, "Too many processors to decompose ny"
+      end if
+      stop
     end if
-    stop
-  end if
-  lnx = nx / nprocs
 
-  ! Share remainder cells for uneven decomposition 
-  ! Allows for flexible process counts
-  if (mod(nx,nprocs) .ne. 0) then
-    if (rank .lt. mod(nx,nprocs)) then
-      lnx = lnx + 1
+    lnx = nx
+    lny = ny / nprocs
+
+    ! Share remainder cells for uneven decomposition
+    ! Allows for flexible process counts
+    if (mod(ny,nprocs) .ne. 0) then
+      if (rank .lt. mod(ny,nprocs)) then
+        lny = lny + 1
+      end if
+    end if
+  else
+    ! Decompose in x-dimension
+    if (nprocs .gt. nx) then
+      if (rank .eq. 0) then
+        print *, "Too many processors to decompose nx"
+      end if
+      stop
+    end if
+
+    lnx = nx / nprocs
+    lny = ny
+
+    ! Share remainder cells for uneven decomposition 
+    ! Allows for flexible process counts
+    if (mod(nx,nprocs) .ne. 0) then
+      if (rank .lt. mod(nx,nprocs)) then
+        lnx = lnx + 1
+      end if
     end if
   end if
     
@@ -115,13 +139,18 @@ program megasweep
   end if
 
   ! Allocate data
-  allocate(aflux0(nang,lnx,ny,nsweeps,ng))
-  allocate(aflux1(nang,lnx,ny,nsweeps,ng))
-  allocate(sflux(lnx,ny,ng))
+  allocate(aflux0(nang,lnx,lny,nsweeps,ng))
+  allocate(aflux1(nang,lnx,lny,nsweeps,ng))
+  allocate(sflux(lnx,lny,ng))
   allocate(mu(nang))
   allocate(eta(nang))
-  allocate(psii(nang,chunk,ng))
-  allocate(psij(nang,lnx,ng))
+  if (ydecomp) then
+    allocate(psii(nang,lny,ng))
+    allocate(psij(nang,chunk,ng))
+  else
+    allocate(psii(nang,chunk,ng))
+    allocate(psij(nang,lnx,ng))
+  end if
   allocate(w(nang))
 
   ! Initilise data
@@ -150,11 +179,17 @@ program megasweep
     write(*,*)
     write(*,'(a)') "Runtime info"
     write(*,'(1x,a,i0)')      "Num. procs:         ", nprocs
-    if (mod(nx,nprocs) .eq. 0) then
-      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a)') "Sub-domain size:    ", lnx, "x", ny, "(all ranks)"
+    if ((ydecomp .and. (mod(ny,nprocs) .eq. 0)) .or. &
+        (mod(nx,nprocs) .eq. 0)) then
+      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a)') "Sub-domain size:    ", lnx, "x", lny, "(all ranks)"
     else
-      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", lnx, "x", ny, "(", mod(nx,nprocs), "ranks)"
-      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx/nprocs, "x", ny, "(", nprocs-mod(nx,nprocs), "ranks)"
+      if (ydecomp) then
+        write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx, "x", lny, "(", mod(ny,nprocs), "ranks)"
+        write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx, "x", ny/nprocs, "(", nprocs-mod(ny,nprocs), "ranks)"
+      else
+        write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", lnx, "x", ny, "(", mod(nx,nprocs), "ranks)"
+        write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx/nprocs, "x", ny, "(", nprocs-mod(nx,nprocs), "ranks)"
+      end if
     end if
     write(*,'(1x,a,f12.1)')   "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
     write(*,'(1x,a,f12.1)')   "Flux size/rank (MB):", 8.0_8*(nang*lnx*ny*nsweeps*ng)/2.0_8**20
@@ -218,12 +253,13 @@ program megasweep
 
 end program
 
-subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
+subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes,ydecomp)
 
   implicit none
 
   integer, intent(in)   :: rank
   integer, intent(inout) :: nang, nx, ny, ng, chunk, ntimes
+  logical, intent(inout) :: ydecomp
 
   character(len=32) :: arg
 
@@ -255,6 +291,8 @@ subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
       i = i + 1
       call getarg(i, arg)
       read(arg, *) ntimes
+    else if (arg .eq. "--ydecomp") then
+      ydecomp = .true.
     else if (arg .eq. "--help") then
       if (rank .eq. 0) then
         write(*, *) "--nang   n  Set number of angles"
@@ -263,6 +301,7 @@ subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes)
         write(*, *) "--ny     n  Set number of cells in y dimension"
         write(*, *) "--chunk  n  Set y-dimension chunk size"
         write(*, *) "--ntimes n  Run the benchmark n times"
+        write(*, *) "--ydecomp   Decompose in y instead of x (makes chunk over x-direction)"
         write(*, *)
         write(*, *) "Default sizes"
         write(*, '(2x,a,i0)') "nang: ", nang
