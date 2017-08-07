@@ -117,7 +117,7 @@ program megasweep
     lnx = nx / nprocs
     lny = ny
 
-    ! Share remainder cells for uneven decomposition 
+    ! Share remainder cells for uneven decomposition
     ! Allows for flexible process counts
     if (mod(nx,nprocs) .ne. 0) then
       if (rank .lt. mod(nx,nprocs)) then
@@ -179,13 +179,18 @@ program megasweep
     write(*,*)
     write(*,'(a)') "Runtime info"
     write(*,'(1x,a,i0)')      "Num. procs:         ", nprocs
-    if ((ydecomp .and. (mod(ny,nprocs) .eq. 0)) .or. &
-        (mod(nx,nprocs) .eq. 0)) then
-      write(*,'(1x,a,i0,1x,a,1x,i0,1x,a)') "Sub-domain size:    ", lnx, "x", lny, "(all ranks)"
-    else
-      if (ydecomp) then
+    if (ydecomp) then
+      write(*,'(1x,a)')       "Decomposing y-axis"
+      if (mod(ny,nprocs) .eq. 0) then
+        write(*,'(1x,a,i0,1x,a,1x,i0,1x,a)') "Sub-domain size:    ", nx, "x", lny, "(all ranks)"
+      else
         write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx, "x", lny, "(", mod(ny,nprocs), "ranks)"
         write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx, "x", ny/nprocs, "(", nprocs-mod(ny,nprocs), "ranks)"
+      end if
+    else
+      write(*,'(1x,a)')       "Decomposing x-axis"
+      if (mod(nx,nprocs) .eq. 0) then
+        write(*,'(1x,a,i0,1x,a,1x,i0,1x,a)') "Sub-domain size:    ", lnx, "x", lny, "(all ranks)"
       else
         write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", lnx, "x", ny, "(", mod(nx,nprocs), "ranks)"
         write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx/nprocs, "x", ny, "(", nprocs-mod(nx,nprocs), "ranks)"
@@ -202,11 +207,19 @@ program megasweep
 
     timer = MPI_Wtime()
 
-    call sweeper(rank,lrank,rrank,             &
-                 nang,lnx,ny,ng,nsweeps,chunk, &
-                 aflux0,aflux1,sflux,          &
-                 psii,psij,                    &
-                 mu,eta,w,v)
+    if (ydecomp) then
+      call sweeper_y(rank,lrank,rrank,           &
+                   nang,nx,lny,ng,nsweeps,chunk, &
+                   aflux0,aflux1,sflux,          &
+                   psii,psij,                    &
+                   mu,eta,w,v)
+    else
+      call sweeper(rank,lrank,rrank,             &
+                   nang,lnx,ny,ng,nsweeps,chunk, &
+                   aflux0,aflux1,sflux,          &
+                   psii,psij,                    &
+                   mu,eta,w,v)
+    end if
 
     ! Swap pointers
     aflux_ptr => aflux0
@@ -240,6 +253,8 @@ program megasweep
     write(*,"(1x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
     write(*,*)
   end if
+
+  print *, sflux(1,1,1)
 
   ! Free data
   deallocate(aflux0, aflux1)
