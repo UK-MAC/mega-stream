@@ -86,6 +86,12 @@ program megasweep
   end if
 
   ! Decompose in x-dimension
+  if (nprocs .gt. nx) then
+    if (rank .eq. 0) then
+      print *, "Too many processors for mesh size"
+    end if
+    stop
+  end if
   lnx = nx / nprocs
 
   ! Share remainder cells for uneven decomposition 
