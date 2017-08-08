@@ -102,5 +102,15 @@ contains
 
   end subroutine send
 
+  ! Reduce an array to single value
+  subroutine reduce(val, res)
+
+    real(kind=8) :: val, res
+    integer :: err
+
+    call MPI_Reduce(val, res, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, err)
+
+  end subroutine
+
 end module comms
 

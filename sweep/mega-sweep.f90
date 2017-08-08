@@ -51,6 +51,8 @@ program megasweep
   real(kind=8), dimension(:), allocatable :: w                  ! scalar flux weights
   real(kind=8) :: v                                             ! time constant
   real(kind=8) :: dx, dy                                        ! cell size
+  real(kind=8), dimension(:), allocatable :: pop                ! scalar flux reduction
+  real(kind=8) :: total_pop
 
   ! Timers
   real(kind=8) :: start_time, end_time
@@ -153,6 +155,7 @@ program megasweep
     allocate(psij(nang,lnx,ng))
   end if
   allocate(w(nang))
+  allocate(pop(ng))
 
   ! Initilise data
   aflux0 = 1.0_8
@@ -234,6 +237,14 @@ program megasweep
   end do
   end_time = MPI_Wtime()
 
+  ! Collate slution
+  call population(lnx,lny,ng,sflux,dx,dy,pop,total_pop)
+  if (rank .eq. 0) then
+    write(*,"(a)") "Population"
+    write(*,"(1x,a,f12.9)") "Total:                   ", total_pop
+    write(*,*)
+  end if
+
   ! Model data movement
   moved = 8.0 * 1.0E-6 * (            &
           1.0*nang*nx*ny*ng*nsweeps + & ! read aflux0
@@ -257,19 +268,44 @@ program megasweep
     write(*,*)
   end if
 
-  print *, sflux(1,1,1)
-
   ! Free data
   deallocate(aflux0, aflux1)
   deallocate(sflux)
   deallocate(mu, eta)
   deallocate(psii, psij)
   deallocate(w)
+  deallocate(pop)
   deallocate(time)
 
   call comms_finalize
 
 end program
+
+! Reduce the scalar flux
+subroutine population(nx, ny, ng, sflux, dx, dy, pop, total)
+
+  use comms
+
+  implicit none
+
+  integer :: nx, ny, ng
+  real(kind=8) :: sflux(nx,ny,ng)
+  real(kind=8) :: dx, dy
+  real(kind=8) :: pop(ng)
+  real(kind=8) :: total
+
+  real(kind=8) :: tmp
+  integer :: g
+
+  do g = 1, ng
+    tmp = sum(sflux(:,:,g)) * dx * dy
+    call reduce(tmp, pop(g))
+    pop(g) = pop(g) / real(ng - g + 1, 8)
+  end do
+
+  total = sum(pop)
+
+end subroutine population
 
 subroutine parse_args(rank,nang,nx,ny,ng,chunk,ntimes,ydecomp)
 
