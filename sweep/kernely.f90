@@ -101,7 +101,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
     psii = 0.0_8
     psij = 0.0_8
 
-    do c = cmin, cmax, jstep ! Loop over chunks
+    do c = cmin, cmax, istep ! Loop over chunks
 
       ! Recv x boundary data for chunk
       psij = 0.0_8
