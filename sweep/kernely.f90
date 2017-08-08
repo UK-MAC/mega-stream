@@ -106,9 +106,9 @@ subroutine sweeper_y(rank,lrank,rrank,          &
       ! Recv x boundary data for chunk
       psij = 0.0_8
       if (jstep .eq. 1) then
-        call recv(psij, nang*chunk*ng, rrank)
-      else
         call recv(psij, nang*chunk*ng, lrank)
+      else
+        call recv(psij, nang*chunk*ng, rrank)
       end if
 
       do g = 1, ng                 ! Loop over energy groups
@@ -136,9 +136,9 @@ subroutine sweeper_y(rank,lrank,rrank,          &
 
       ! Send y boundary data for chunk
       if (jstep .eq. 1) then
-        call send(psij, nang*chunk*ng, lrank)
-      else
         call send(psij, nang*chunk*ng, rrank)
+      else
+        call send(psij, nang*chunk*ng, lrank)
       end if
 
     end do ! chunk loop
