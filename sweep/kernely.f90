@@ -104,6 +104,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
     do c = cmin, cmax, jstep ! Loop over chunks
 
       ! Recv x boundary data for chunk
+      psij = 0.0_8
       if (jstep .eq. 1) then
         call recv(psij, nang*chunk*ng, lrank)
       else
