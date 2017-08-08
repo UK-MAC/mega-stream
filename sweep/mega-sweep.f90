@@ -241,7 +241,7 @@ program megasweep
   call population(lnx,lny,ng,sflux,dx,dy,pop,total_pop)
   if (rank .eq. 0) then
     write(*,"(a)") "Population"
-    write(*,"(1x,a,e14.7)") "Total:                   ", total_pop
+    write(*,"(1x,a,e23.16)") "Total:                   ", total_pop
     write(*,*)
   end if
 
