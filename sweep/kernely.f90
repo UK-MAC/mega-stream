@@ -27,7 +27,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
                    aflux0,aflux1,sflux,         &
                    psii,psij,                   &
                    mu,eta,                      &
-                   w,v)
+                   w,v,dx,dy)
 
   use comms
 
@@ -44,6 +44,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
   real(kind=8) :: eta(nang)
   real(kind=8) :: w(nang)
   real(kind=8) :: v
+  real(kind=8) :: dx, dy
 
   integer :: a, i, j, g, c, ci, sweep
   integer :: istep, jstep ! Spatial step direction
@@ -119,7 +120,8 @@ subroutine sweeper_y(rank,lrank,rrank,          &
 !dir$ vector nontemporal(aflux1)
             do a = 1, nang         ! Loop over angles
               ! Calculate angular flux
-              psi = mu(a)*psii(a,j,g) + eta(a)*psij(a,ci,g) + v*aflux0(a,i,j,sweep,g)
+              psi = (mu(a)*psii(a,j,g) + eta(a)*psij(a,ci,g) + v*aflux0(a,i,j,sweep,g)) &
+                    / (0.07_8 + 2.0_8*mu(a)/dx + 2.0_8*eta(a)/dy + v)
 
               ! Outgoing diamond difference
               psii(a,j,g) = 2.0_8*psi - psii(a,j,g)

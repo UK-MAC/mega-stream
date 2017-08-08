@@ -50,6 +50,7 @@ program megasweep
   real(kind=8), dimension(:,:,:), allocatable :: psii, psij     ! edge angular flux
   real(kind=8), dimension(:), allocatable :: w                  ! scalar flux weights
   real(kind=8) :: v                                             ! time constant
+  real(kind=8) :: dx, dy                                        ! cell size
 
   ! Timers
   real(kind=8) :: start_time, end_time
@@ -163,6 +164,8 @@ program megasweep
   psij = 0.0_8
   w = 0.4_8
   v = 0.1_8
+  dx = 1.0_8 / nx
+  dy = 1.0_8 / ny
 
   ! Allocate timers
   allocate(time(ntimes))
@@ -212,13 +215,13 @@ program megasweep
                    nang,nx,lny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v)
+                   mu,eta,w,v,dx,dy)
     else
       call sweeper(rank,lrank,rrank,             &
                    nang,lnx,ny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v)
+                   mu,eta,w,v,dx,dy)
     end if
 
     ! Swap pointers
