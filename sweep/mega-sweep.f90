@@ -82,7 +82,7 @@ program megasweep
   call parse_args(rank,nang,nx,ny,ng,chunk,ntimes,ydecomp)
 
   ! Check ny is split into even number of chunks
-  if (mod(ny,chunk) .ne. 0) then
+  if (.not. ydecomp .and. mod(ny,chunk) .ne. 0) then
     if (rank .eq. 0) then
       print *, "Chunk size must divide ny"
     end if
