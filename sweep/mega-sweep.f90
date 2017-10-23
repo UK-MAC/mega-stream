@@ -26,6 +26,7 @@ program megasweep
   ! MEGA-SWEEP adds a KBA sweep along with the MPI communication to the MEGA-STREAM kernel
 
   use comms
+  use omp_lib
 
   implicit none
 
@@ -33,6 +34,8 @@ program megasweep
   integer :: rank, nprocs
   integer :: lrank, rrank ! neighbour ranks
 
+  ! OpenMP variables
+  integer :: nthreads
 
   ! Problem sizes
   integer :: nang, ng ! angles and groups
@@ -68,6 +71,10 @@ program megasweep
 
   call comms_rank(rank)
   call comms_size(nprocs)
+
+  !$omp parallel
+    nthreads = omp_get_num_threads()
+  !$omp end parallel
 
   ! Set default problem sizes
   nx = 128
@@ -188,6 +195,7 @@ program megasweep
     write(*,*)
     write(*,'(a)') "Runtime info"
     write(*,'(1x,a,i0)')      "Num. procs:         ", nprocs
+    write(*,'(1x,a,i0)')      "Num. threads/proc:  ", nthreads
     if (ydecomp) then
       write(*,'(1x,a)')       "Decomposing y-axis"
       if (mod(ny,nprocs) .eq. 0) then
