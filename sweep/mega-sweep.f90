@@ -60,7 +60,7 @@ program megasweep
   real(kind=8), dimension(:), allocatable :: time
 
   ! Local variables
-  integer :: t
+  integer :: t, g
   logical :: ydecomp = .false.
   real(kind=8) :: moved ! model of data movement
 
@@ -158,13 +158,16 @@ program megasweep
   allocate(pop(ng))
 
   ! Initilise data
-  aflux0 = 1.0_8
-  aflux1 = 0.0_8
-  sflux = 0.0_8
+  !$omp parallel do
+  do g = 1, ng
+    aflux0(:,:,:,:,g) = 1.0_8
+    aflux1(:,:,:,:,g) = 0.0_8
+    sflux(:,:,g) = 0.0_8
+    psii(:,:,g)= 0.0_8
+    psij(:,:,g)= 0.0_8
+  end do
   mu = 0.33_8
   eta = 0.66_8
-  psii = 0.0_8
-  psij = 0.0_8
   w = 0.4_8
   v = 0.1_8
   dx = 1.0_8 / nx
