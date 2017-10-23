@@ -112,6 +112,7 @@ subroutine sweeper(rank,lrank,rrank,            &
         call recv(psii, nang*chunk*ng, rrank)
       end if
 
+      !$omp parallel do private(cj,j,i,a,psi)
       do g = 1, ng                 ! Loop over energy groups
         do cj = ymin, ymax, jstep  ! Loop over cells in chunk (y-dimension)
           ! Calculate y index with respect to ny
@@ -135,6 +136,7 @@ subroutine sweeper(rank,lrank,rrank,            &
           end do ! x loop
         end do ! y chunk loop
       end do ! group loop
+      !$omp end parallel do
 
       ! Send y boundary data for chunk
       if (istep .eq. 1) then

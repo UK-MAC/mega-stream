@@ -112,6 +112,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
         call recv(psij, nang*chunk*ng, rrank)
       end if
 
+      !$omp parallel do private(j,ci,i,a,psi)
       do g = 1, ng                 ! Loop over energy groups
         do j = ymin, ymax, jstep  ! Loop over y-dimension
           do ci = xmin, xmax, istep ! Loop over cells in chunk (x-dimension)
@@ -135,6 +136,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
           end do ! x loop
         end do ! y chunk loop
       end do ! group loop
+      !$omp end parallel do
 
       ! Send y boundary data for chunk
       if (jstep .eq. 1) then
