@@ -66,6 +66,8 @@ program megasweep
   integer :: t, g
   logical :: ydecomp = .false.
   real(kind=8) :: moved ! model of data movement
+  real(kind=8) :: lmoved ! model of data movement for single MPI rank
+  real(kind=8) :: tmoved ! model of data movement for single thread of single MPI rank
 
   call comms_init
 
@@ -265,6 +267,21 @@ program megasweep
           2.0*nang*nx*ng +            & ! read and write psij
           2.0*nx*ny*ng)                 ! read and write sflux
 
+  lmoved = 8.0 * 1.0E-6 * (            &
+          1.0*nang*lnx*lny*ng*nsweeps + & ! read aflux0
+          1.0*nang*lnx*lny*ng*nsweeps + & ! write aflux1
+          nang + nang +               & ! read mu and eta
+          2.0*nang*lny*ng +            & ! read and write psii
+          2.0*nang*lnx*ng +            & ! read and write psij
+          2.0*lnx*lny*ng)                 ! read and write sflux
+
+  tmoved = 8.0 * 1.0E-6 * (            &
+          1.0*nang*lnx*lny*ng/nthreads*nsweeps + & ! read aflux0
+          1.0*nang*lnx*lny*ng/nthreads*nsweeps + & ! write aflux1
+          nang + nang +               & ! read mu and eta
+          2.0*nang*lny*ng/nthreads +            & ! read and write psii
+          2.0*nang*lnx*ng/nthreads +            & ! read and write psij
+          2.0*lnx*lny*ng/nthreads)                 ! read and write sflux
 
   if (rank.EQ.0) then
     write(*,"(a)")   "Summary"
@@ -272,10 +289,14 @@ program megasweep
     write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
     write(*,"(1x,a,f12.9)") "Runtime (s):             ", end_time-start_time
     write(*,*)
-    write(*,"(1x,a,f12.2)") "Estimate moved (MB):     ", moved
+    write(*,"(1x,a)")   "All ranks"
+    write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
+    write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
+    write(*,"(2x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
     write(*,*)
-    write(*,"(1x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
-    write(*,"(1x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
+    write(*,"(1x,a)")   "Single rank"
+    write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", lmoved/minval(time(2:))
+    write(*,"(2x,a,f12.2)") "Thread bandwidth (MB/s): ", tmoved/minval(time(2:))
     write(*,*)
   end if
 
