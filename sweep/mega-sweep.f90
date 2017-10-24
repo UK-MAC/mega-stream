@@ -287,7 +287,7 @@ program megasweep
     write(*,"(a)")   "Summary"
     write(*,"(1x,a,f12.9)") "Fastest iteration (s):   ", minval(time(2:))
     write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
-    write(*,"(1x,a,f12.9)") "Runtime (s):             ", end_time-start_time
+    write(*,"(1x,a,f15.9)") "Runtime (s):             ", end_time-start_time
     write(*,*)
     write(*,"(1x,a)")   "All ranks"
     write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
