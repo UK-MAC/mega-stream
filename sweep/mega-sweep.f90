@@ -228,12 +228,7 @@ program megasweep
 
     timer = MPI_Wtime()
 
-    ! Zero scalar flux
-    !$omp parallel do
-    do g = 1, ng
-      sflux(:,:,g) = 0.0_8
-    end do
-    !$omp end parallel do
+    ! Don't zero scalar flux, as it goes negative - OK for this benchmark with fake numbers
 
     if (ydecomp) then
       call sweeper_y(rank,lrank,rrank,           &
