@@ -70,15 +70,6 @@ subroutine sweeper(rank,lrank,rrank,            &
         cmin = nchunks
         cmax = 1
       case (2)
-        istep = 1
-        xmin = 1
-        xmax = nx
-        jstep = -1
-        ymin = chunk
-        ymax = 1
-        cmin = nchunks
-        cmax = 1
-      case (3)
         istep = -1
         xmin = nx
         xmax = 1
@@ -87,6 +78,15 @@ subroutine sweeper(rank,lrank,rrank,            &
         ymax = chunk
         cmin = 1
         cmax = nchunks
+      case (3)
+        istep = 1
+        xmin = 1
+        xmax = nx
+        jstep = -1
+        ymin = chunk
+        ymax = 1
+        cmin = nchunks
+        cmax = 1
       case (4)
         istep = 1
         xmin = 1
@@ -101,6 +101,13 @@ subroutine sweeper(rank,lrank,rrank,            &
     ! Zero boundary data every sweep
     psii = 0.0_8
     psij = 0.0_8
+
+    print *, "Sweep", sweep
+    print *, "istep", istep
+    print *, "jstep", jstep
+    print *, "xmin/max", xmin, xmax
+    print *, "ymin/max", ymin, ymax
+    print *, "cmin/max", cmin, cmax
 
     do c = cmin, cmax, jstep ! Loop over chunks
 
