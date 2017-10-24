@@ -27,7 +27,8 @@ subroutine sweeper_y(rank,lrank,rrank,          &
                    aflux0,aflux1,sflux,         &
                    psii,psij,                   &
                    mu,eta,                      &
-                   w,v,dx,dy)
+                   w,v,dx,dy,                   &
+                   buf)
 
   use comms
 
@@ -45,6 +46,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
   real(kind=8) :: w(nang)
   real(kind=8) :: v
   real(kind=8) :: dx, dy
+  real(kind=8) :: buf(nang,chunk,ng)
 
   integer :: a, i, j, g, c, ci, sweep
   integer :: istep, jstep ! Spatial step direction
@@ -139,10 +141,12 @@ subroutine sweeper_y(rank,lrank,rrank,          &
       !$omp end parallel do
 
       ! Send y boundary data for chunk
+      ! NB non-blocking so need to buffer psii
+      buf = psij
       if (jstep .eq. 1) then
-        call send(psij, nang*chunk*ng, rrank)
+        call send(buf, nang*chunk*ng, rrank)
       else
-        call send(psij, nang*chunk*ng, lrank)
+        call send(buf, nang*chunk*ng, lrank)
       end if
 
     end do ! chunk loop

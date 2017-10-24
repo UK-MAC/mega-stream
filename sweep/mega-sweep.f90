@@ -33,6 +33,7 @@ program megasweep
   ! MPI variables
   integer :: rank, nprocs
   integer :: lrank, rrank ! neighbour ranks
+  real(kind=8), dimension(:,:,:), allocatable :: buf ! comms buffer
 
   ! OpenMP variables
   integer :: nthreads
@@ -165,6 +166,7 @@ program megasweep
   end if
   allocate(w(nang))
   allocate(pop(ng))
+  allocate(buf(nang,chunk,ng))
 
   ! Initilise data
   !$omp parallel do
@@ -238,13 +240,13 @@ program megasweep
                    nang,nx,lny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v,dx,dy)
+                   mu,eta,w,v,dx,dy,buf)
     else
       call sweeper(rank,lrank,rrank,             &
                    nang,lnx,ny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v,dx,dy)
+                   mu,eta,w,v,dx,dy,buf)
     end if
 
     ! Swap pointers
