@@ -226,6 +226,13 @@ program megasweep
 
     timer = MPI_Wtime()
 
+    ! Zero scalar flux
+    !$omp parallel do
+    do g = 1, ng
+      sflux(:,:,g) = 0.0_8
+    end do
+    !$omp end parallel do
+
     if (ydecomp) then
       call sweeper_y(rank,lrank,rrank,           &
                    nang,nx,lny,ng,nsweeps,chunk, &
