@@ -102,13 +102,6 @@ subroutine sweeper(rank,lrank,rrank,            &
     psii = 0.0_8
     psij = 0.0_8
 
-    print *, "Sweep", sweep
-    print *, "istep", istep
-    print *, "jstep", jstep
-    print *, "xmin/max", xmin, xmax
-    print *, "ymin/max", ymin, ymax
-    print *, "cmin/max", cmin, cmax
-
     do c = cmin, cmax, jstep ! Loop over chunks
 
       ! Recv y boundary data for chunk
