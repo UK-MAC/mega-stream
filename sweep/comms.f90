@@ -87,6 +87,15 @@ contains
 
   end subroutine recv
 
+  ! Wait on previous send
+  subroutine wait_on_sends
+
+    integer :: err
+
+    call MPI_Wait(send_request, MPI_STATUS_IGNORE, err)
+
+  end subroutine wait_on_sends
+
   ! Send 3D array
   subroutine send(array,num,to)
 
@@ -94,10 +103,9 @@ contains
     integer, intent(in) :: num, to
     integer :: err
 
-    ! Wait for previous send
-    call MPI_Wait(send_request, MPI_STATUS_IGNORE, err)
+    ! wait_on_sends must have been previsouly called
+    ! Array must be safe to send asynchronously, and not reused before the current Isend operation
 
-    ! Then send
     call MPI_Isend(array, num, MPI_REAL8, to, 0, MPI_COMM_WORLD, send_request, err)
 
   end subroutine send

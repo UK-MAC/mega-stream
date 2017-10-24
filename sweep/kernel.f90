@@ -141,7 +141,8 @@ subroutine sweeper(rank,lrank,rrank,            &
       !$omp end parallel do
 
       ! Send y boundary data for chunk
-      ! NB non-blocking so need to buffer psii
+      ! NB non-blocking so need to buffer psii, making sure previous send has finished
+      call wait_on_sends
       buf = psii
       if (istep .eq. 1) then
         call send(buf, nang*chunk*ng, rrank)
