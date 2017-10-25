@@ -29,6 +29,9 @@ module comms
   ! MPI Send request
   integer :: send_request
 
+  ! Timer
+  real(kind=8) :: recv_time, wait_time
+
 contains
 
   ! Init MPI
@@ -82,8 +85,11 @@ contains
     real(kind=8) :: array(:,:,:)
     integer, intent(in) :: num, from
     integer :: err
+    real(kind=8) :: time
 
+    time = MPI_Wtime()
     call MPI_Recv(array, num, MPI_REAL8, from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, err)
+    recv_time = recv_time + MPI_Wtime() - time
 
   end subroutine recv
 
@@ -91,8 +97,11 @@ contains
   subroutine wait_on_sends
 
     integer :: err
+    real(kind=8) :: time
 
+    time = MPI_Wtime()
     call MPI_Wait(send_request, MPI_STATUS_IGNORE, err)
+    wait_time = wait_time + MPI_Wtime() - time
 
   end subroutine wait_on_sends
 
