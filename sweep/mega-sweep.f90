@@ -60,6 +60,7 @@ program megasweep
 
   ! Timers
   real(kind=8) :: start_time, end_time
+  real(kind=8) :: total_time
   real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
 
@@ -223,6 +224,9 @@ program megasweep
   end if
 
 
+  recv_time = 0.0_8
+  wait_time = 0.0_8
+
   start_time = MPI_Wtime()
   do t = 1, ntimes
 
@@ -253,6 +257,8 @@ program megasweep
 
   end do
   end_time = MPI_Wtime()
+
+  total_time = end_time - start_time
 
   ! Collate slution
   call population(lnx,lny,ng,sflux,dx,dy,pop,total_pop)
@@ -291,12 +297,20 @@ program megasweep
     write(*,"(a)")   "Summary"
     write(*,"(1x,a,f12.9)") "Fastest iteration (s):   ", minval(time(2:))
     write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
-    write(*,"(1x,a,f15.9)") "Runtime (s):             ", end_time-start_time
+    write(*,*)
+    write(*,"(1x,a,f15.9,f5.1,a)") "Time in MPI_Recv (s):    ", recv_time, 100.0_8*recv_time/total_time, "%"
+    write(*,"(1x,a,f15.9,f5.1,a)") "Time in MPI_Wait (s):    ", wait_time, 100.0_8*wait_time/total_time, "%"
+    write(*,"(1x,a,f15.9,f5.1,a)") "Compute time (s):        ", &
+      sum(time)-recv_time-wait_time, 100.0_8*(sum(time)-recv_time-wait_time)/total_time, "%"
+    write(*,"(1x,a,f15.9,f5.1,a)") "Remaining time (s):      ", &
+      total_time-sum(time), 100.0_8*(total_time-sum(time))/total_time, "%"
+    write(*,*)
+    write(*,"(1x,a,f15.9)") "Runtime (s):             ", total_time
     write(*,*)
     write(*,"(1x,a)")   "All ranks"
     write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
-    write(*,"(2x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/(end_time-start_time)
+    write(*,"(2x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/total_time
     write(*,*)
     write(*,"(1x,a)")   "Single rank"
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", lmoved/minval(time(2:))
