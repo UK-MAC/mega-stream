@@ -31,6 +31,11 @@ FTN_GNU = mpif90
 FFLAGS_GNU = -O3 -ffree-line-length-none
 OMP_GNU = -fopenmp
 
+# Cray settings
+FTN_CRAY = ftn
+FFLAGS_CRAY = -O3
+OMP_CRAY =
+
 ifdef DEBUG
   FFLAGS_GNU = -ffree-line-length-none -g -fcheck=all
   FFLAGS_INTEL = -g -debug all -traceback
