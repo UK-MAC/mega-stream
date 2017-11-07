@@ -27,7 +27,7 @@ module comms3d
   implicit none
 
   ! MPI Send request, one for up/down and one for left/right
-  integer :: lr_send_request, ud_send_request
+  integer :: y_send_request, z_send_request
 
   ! Timer
   real(kind=8) :: recv_time, wait_time
@@ -47,8 +47,8 @@ contains
     end if
 
     ! Set request to NULL
-    lr_send_request = MPI_REQUEST_NULL
-    ud_send_request = MPI_REQUEST_NULL
+    y_send_request = MPI_REQUEST_NULL
+    z_send_request = MPI_REQUEST_NULL
   end subroutine comms_init
 
   ! Finalize MPI
@@ -96,18 +96,15 @@ contains
   end subroutine
 
   ! Receive 4D arrays
-  subroutine recv(lr_array,lr_num,lr_from,ud_array,ud_num,ud_from)
+  subroutine recv(array,num,from)
 
-    real(kind=8) :: lr_array(:,:,:,:)
-    real(kind=8) :: ud_array(:,:,:,:)
-    integer, intent(in) :: lr_num, lr_from
-    integer, intent(in) :: ud_num, ud_from
+    real(kind=8) :: array(:,:,:,:)
+    integer, intent(in) :: num, from
     integer :: err
     real(kind=8) :: time
 
     time = MPI_Wtime()
-    call MPI_Recv(lr_array, lr_num, MPI_REAL8, lr_from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, err)
-    call MPI_Recv(ud_array, ud_num, MPI_REAL8, ud_from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, err)
+    call MPI_Recv(array, num, MPI_REAL8, from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, err)
     recv_time = recv_time + MPI_Wtime() - time
 
   end subroutine recv
@@ -119,28 +116,39 @@ contains
     real(kind=8) :: time
 
     time = MPI_Wtime()
-    call MPI_Wait(lr_send_request, MPI_STATUS_IGNORE, err)
-    call MPI_Wait(ud_send_request, MPI_STATUS_IGNORE, err)
+    call MPI_Wait(y_send_request, MPI_STATUS_IGNORE, err)
+    call MPI_Wait(z_send_request, MPI_STATUS_IGNORE, err)
     wait_time = wait_time + MPI_Wtime() - time
 
   end subroutine wait_on_sends
 
   ! Send 4D arrays
-  subroutine send(lr_array,lr_num,lr_to,ud_array,ud_num,ud_to)
+  subroutine ysend(array,num,to)
 
-    real(kind=8) :: lr_array(:,:,:,:)
-    real(kind=8) :: ud_array(:,:,:,:)
-    integer, intent(in) :: lr_num, lr_to
-    integer, intent(in) :: ud_num, ud_to
+    real(kind=8) :: array(:,:,:,:)
+    integer, intent(in) :: num, to
     integer :: err
 
     ! wait_on_sends must have been previsouly called
     ! Array must be safe to send asynchronously, and not reused before the current Isend operation
 
-    call MPI_Isend(lr_array, lr_num, MPI_REAL8, lr_to, 0, MPI_COMM_WORLD, lr_send_request, err)
-    call MPI_Isend(ud_array, ud_num, MPI_REAL8, ud_to, 0, MPI_COMM_WORLD, ud_send_request, err)
+    call MPI_Isend(array, num, MPI_REAL8, to, 0, MPI_COMM_WORLD, y_send_request, err)
 
-  end subroutine send
+  end subroutine ysend
+
+  ! Send 4D arrays
+  subroutine zsend(array,num,to)
+
+    real(kind=8) :: array(:,:,:,:)
+    integer, intent(in) :: num, to
+    integer :: err
+
+    ! wait_on_sends must have been previsouly called
+    ! Array must be safe to send asynchronously, and not reused before the current Isend operation
+
+    call MPI_Isend(array, num, MPI_REAL8, to, 0, MPI_COMM_WORLD, z_send_request, err)
+
+  end subroutine zsend
 
   ! Reduce an array to single value
   subroutine reduce(val, res)

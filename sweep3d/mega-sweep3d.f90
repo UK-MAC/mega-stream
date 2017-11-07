@@ -35,8 +35,8 @@ program megasweep3d
   integer :: rank, nprocs
   integer :: yrank, zrank
   integer :: npey, npez ! ranks in y and z dimensions
-  integer :: lrank, rrank, urank, drank ! neighbour ranks
-  real(kind=8), dimension(:,:,:,:), allocatable :: lr_buf, ud_buf ! comms buffers
+  integer :: ydown_rank, yup_rank, zdown_rank, zup_rank ! neighbour ranks
+  real(kind=8), dimension(:,:,:,:), allocatable :: y_buf, z_buf ! comms buffers
 
   ! OpenMP variables
   integer :: nthreads
@@ -86,7 +86,7 @@ program megasweep3d
   nz = 128
   ng = 16
   nang = 16
-  nsweeps = 4
+  nsweeps = 8
   chunk = 1
   ntimes = 500
 
@@ -128,24 +128,24 @@ program megasweep3d
 
   ! Set neighbour ranks
   if (yrank .ne. 0) then
-    lrank = (yrank-1) + zrank*npey
+    ydown_rank = (yrank-1) + zrank*npey
   else
-    lrank = MPI_PROC_NULL
+    ydown_rank = MPI_PROC_NULL
   end if
   if (yrank .ne. npey-1) then
-    rrank = (yrank+1) + zrank*npey
+    yup_rank = (yrank+1) + zrank*npey
   else
-    rrank = MPI_PROC_NULL
+    yup_rank = MPI_PROC_NULL
   end if
   if (zrank .ne. 0) then
-    drank = yrank + (zrank-1)*npey
+    zdown_rank = yrank + (zrank-1)*npey
   else
-    drank = MPI_PROC_NULL
+    zdown_rank = MPI_PROC_NULL
   end if
   if (zrank .ne. npez-1) then
-    urank = yrank + (zrank+1)*npey
+    zup_rank = yrank + (zrank+1)*npey
   else
-    urank = MPI_PROC_NULL
+    zup_rank = MPI_PROC_NULL
   end if
 
   ! Share remainder cells for uneven decomposition
@@ -196,8 +196,8 @@ program megasweep3d
   allocate(psik(nang,chunk,lny,ng))
   allocate(w(nang))
   allocate(pop(ng))
-  allocate(lr_buf(nang,chunk,lnz,ng))
-  allocate(ud_buf(nang,chunk,lny,ng))
+  allocate(y_buf(nang,chunk,lnz,ng))
+  allocate(z_buf(nang,chunk,lny,ng))
 
   ! Allocate timers
   allocate(time(ntimes))
@@ -231,11 +231,12 @@ program megasweep3d
 
     ! Don't zero scalar flux, as it goes negative - OK for this benchmark with fake numbers
 
-    !call sweeper(rank,lrank,rrank,             &
-    !             nang,lnx,ny,ng,nsweeps,chunk, &
-    !             aflux0,aflux1,sflux,          &
-    !             psii,psij,                    &
-    !             mu,eta,w,v,dx,dy,buf)
+    call sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
+                   nang,lnx,lny,lnz,ng,nsweeps,chunk, &
+                   aflux0,aflux1,sflux,               &
+                   psii,psij,psik,                    &
+                   mu,eta,xi,w,v,dx,dy,dz,            &
+                   y_buf,z_buf)
 
     ! Swap pointers
     aflux_ptr => aflux0

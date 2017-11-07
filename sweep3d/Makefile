@@ -48,7 +48,7 @@ OMP=$(OMP_$(COMPILER))
 
 default: mega-sweep3d
 
-mega-sweep3d: comms3d.f90 mega-sweep3d.f90
+mega-sweep3d: comms3d.f90 kernel3d.f90 mega-sweep3d.f90
 	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
 
 .PHONY: clean
