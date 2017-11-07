@@ -218,7 +218,7 @@ program megasweep
         write(*,'(1x,a,i0,1x,a,1x,i0,1x,a,i0,1x,a)') "Sub-domain size:    ", nx/nprocs, "x", ny, "(", nprocs-mod(nx,nprocs), "ranks)"
       end if
     end if
-    write(*,'(1x,a,f12.1)')   "Flux size (MB):     ", 8.0_8*(nang*nx*ny*nsweeps*ng)/2.0_8**20
+    write(*,'(1x,a,f12.1)')   "Flux size (MB):     ", 8.0_8*nang*nx*ny*nsweeps*ng/2.0_8**20
     write(*,'(1x,a,f12.1)')   "Flux size/rank (MB):", 8.0_8*(nang*lnx*lny*nsweeps*ng)/2.0_8**20
     write(*,*)
   end if
