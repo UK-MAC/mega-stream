@@ -316,6 +316,8 @@ program megasweep
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", lmoved/minval(time(2:))
     write(*,"(2x,a,f12.2)") "Thread bandwidth (MB/s): ", tmoved/minval(time(2:))
     write(*,*)
+    write(*,"(1x,a)")   "All ranks - cache bandwidth"
+    write(*,"(2x,a,f12.2)") "Overall bandwidth (GB/s):", 1.0E-9*8*10*nang*nx*ny*ng*nsweeps*ntimes/total_time
   end if
 
   ! Free data
