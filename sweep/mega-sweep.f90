@@ -328,6 +328,7 @@ program megasweep
   deallocate(w)
   deallocate(pop)
   deallocate(time)
+  deallocate(buf)
 
   call comms_finalize
 
