@@ -152,42 +152,7 @@ program megasweep
     rrank = MPI_PROC_NULL
   end if
 
-  ! Allocate data
-  allocate(aflux0(nang,lnx,lny,nsweeps,ng))
-  allocate(aflux1(nang,lnx,lny,nsweeps,ng))
-  allocate(sflux(lnx,lny,ng))
-  allocate(mu(nang))
-  allocate(eta(nang))
-  if (ydecomp) then
-    allocate(psii(nang,lny,ng))
-    allocate(psij(nang,chunk,ng))
-  else
-    allocate(psii(nang,chunk,ng))
-    allocate(psij(nang,lnx,ng))
-  end if
-  allocate(w(nang))
-  allocate(pop(ng))
-  allocate(buf(nang,chunk,ng))
-
-  ! Initilise data
-  !$omp parallel do
-  do g = 1, ng
-    aflux0(:,:,:,:,g) = 1.0_8
-    aflux1(:,:,:,:,g) = 0.0_8
-    sflux(:,:,g) = 0.0_8
-    psii(:,:,g)= 0.0_8
-    psij(:,:,g)= 0.0_8
-  end do
-  mu = 0.33_8
-  eta = 0.66_8
-  w = 0.4_8
-  v = 0.1_8
-  dx = 1.0_8 / nx
-  dy = 1.0_8 / ny
-
-  ! Allocate timers
-  allocate(time(ntimes))
-
+  ! Print problem information
   if (rank.EQ.0) then
     write(*,'(a)') "MEGA-SWEEP!"
     write(*,*)
@@ -223,6 +188,42 @@ program megasweep
     write(*,*)
   end if
 
+
+  ! Allocate data
+  allocate(aflux0(nang,lnx,lny,nsweeps,ng))
+  allocate(aflux1(nang,lnx,lny,nsweeps,ng))
+  allocate(sflux(lnx,lny,ng))
+  allocate(mu(nang))
+  allocate(eta(nang))
+  if (ydecomp) then
+    allocate(psii(nang,lny,ng))
+    allocate(psij(nang,chunk,ng))
+  else
+    allocate(psii(nang,chunk,ng))
+    allocate(psij(nang,lnx,ng))
+  end if
+  allocate(w(nang))
+  allocate(pop(ng))
+  allocate(buf(nang,chunk,ng))
+
+  ! Initilise data
+  !$omp parallel do
+  do g = 1, ng
+    aflux0(:,:,:,:,g) = 1.0_8
+    aflux1(:,:,:,:,g) = 0.0_8
+    sflux(:,:,g) = 0.0_8
+    psii(:,:,g)= 0.0_8
+    psij(:,:,g)= 0.0_8
+  end do
+  mu = 0.33_8
+  eta = 0.66_8
+  w = 0.4_8
+  v = 0.1_8
+  dx = 1.0_8 / nx
+  dy = 1.0_8 / ny
+
+  ! Allocate timers
+  allocate(time(ntimes))
 
   recv_time = 0.0_8
   wait_time = 0.0_8
