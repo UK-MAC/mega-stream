@@ -185,6 +185,11 @@ program megasweep
     end if
     write(*,'(1x,a,f12.1)')   "Flux size (MB):     ", 8.0_8*nang*nx*ny*nsweeps*ng/2.0_8**20
     write(*,'(1x,a,f12.1)')   "Flux size/rank (MB):", 8.0_8*nang*lnx*lny*nsweeps*ng/2.0_8**20
+    if (ydecomp) then
+      write(*,'(1x,a,f12.1,f12.1)')   "Outgoing flux size/rank (KB):", 8.0_8*nang*lny*ng/2.0_8**10, 8.0_8*nang*chunk*ng/2.0_8**10
+    else
+      write(*,'(1x,a,f12.1,f12.1)')   "Outgoing flux size/rank (KB):", 8.0_8*nang*chunk*ng/2.0_8**10, 8.0_8*nang*lnx*ng/2.0_8**10
+    end if
     write(*,*)
   end if
 
