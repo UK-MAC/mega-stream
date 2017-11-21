@@ -62,13 +62,14 @@ program megasweep3d
   real(kind=8) :: total_pop
 
   ! Timers
+  real(kind=8), dimension(:), allocatable :: sweep_times
   real(kind=8) :: start_time, end_time
   real(kind=8) :: total_time
   real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
 
   ! Local variables
-  integer :: t, g
+  integer :: t, g, sweep
   real(kind=8) :: moved ! model of data movement
 
   call comms_init
@@ -201,6 +202,9 @@ program megasweep3d
 
   ! Allocate timers
   allocate(time(ntimes))
+  allocate(sweep_times(nsweeps))
+
+  sweep_times(:) = 0.0_8
 
   ! Initilise data
   !$omp parallel do
@@ -236,7 +240,7 @@ program megasweep3d
                    aflux0,aflux1,sflux,               &
                    psii,psij,psik,                    &
                    mu,eta,xi,w,v,dx,dy,dz,            &
-                   y_buf,z_buf)
+                   y_buf,z_buf, sweep_times)
 
     ! Swap pointers
     aflux_ptr => aflux0
@@ -288,6 +292,11 @@ program megasweep3d
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
     write(*,"(2x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/total_time
     write(*,*)
+
+    do sweep = 1, nsweeps
+      write(*, *) 'Sweep ', sweep, ' Time (s) ', sweep_times(sweep)
+    end do
+
   end if
 
   ! Free data
@@ -298,6 +307,7 @@ program megasweep3d
   deallocate(w)
   deallocate(pop)
   deallocate(time)
+  deallocate(sweep_times)
 
   call comms_finalize
 
