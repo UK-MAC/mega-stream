@@ -83,8 +83,8 @@ program megasweep
   ! Set default problem sizes
   nx = 128
   ny = 128
-  ng = 16
-  nang = 16
+  ng = 64
+  nang = 128
   nsweeps = 4
   chunk = 1
   ntimes = 500
