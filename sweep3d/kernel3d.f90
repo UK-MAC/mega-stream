@@ -168,7 +168,7 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
     psij = 0.0_8
     psik = 0.0_8
 
-    do c = cmin, cmax, jstep ! Loop over chunks
+    do c = cmin, cmax, istep ! Loop over chunks
 
       ! Recv boundary data for chunk
       psij = 0.0_8
