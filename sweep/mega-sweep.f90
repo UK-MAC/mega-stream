@@ -267,7 +267,7 @@ program megasweep
 
   total_time = end_time - start_time
 
-  ! Collate slution
+  ! Collate solution
   call population(lnx,lny,ng,sflux,dx,dy,pop,total_pop)
   if (rank .eq. 0) then
     write(*,"(a)") "Population"
