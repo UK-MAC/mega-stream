@@ -250,6 +250,17 @@ program megasweep3d
 
   total_time = end_time - start_time
 
+  ! Check angular flux is non-zero
+  ! If still zero, then sweep didn't touch a cell
+  if (any(aflux0 .eq. 0.0_8)) then
+    write(*,"(a,i0)") "Warning: angular flux 0 contains zero values on rank ", rank
+    write(*,*)
+  end if
+  if (any(aflux1 .eq. 0.0_8)) then
+    write(*,"(a,i0)") "Warning: angular flux 1 contains zero values on rank ", rank
+    write(*,*)
+  end if
+
   ! Collate solution
   call population(lnx,lny,lnz,ng,sflux,dx,dy,dz,pop,total_pop)
   if (rank .eq. 0) then
