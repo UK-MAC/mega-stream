@@ -254,6 +254,9 @@ program megasweep3d
   call population(lnx,lny,lnz,ng,sflux,dx,dy,dz,pop,total_pop)
   if (rank .eq. 0) then
     write(*,"(a)") "Population"
+    do g = 1, ng
+      write(*,"(1x,i0,a,e23.16)") g, ":", pop(g)
+    end do
     write(*,"(1x,a,e23.16)") "Total:                   ", total_pop
     write(*,*)
   end if
