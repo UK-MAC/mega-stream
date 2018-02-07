@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Output formatting of mega-sweep footprint.
 
 
-## [v2.0] - 2016-11-06
+## [v2.0] - 2017-11-06
 
 ### Added
 - The mega-sweep mini-app has been created. Currently a Fortran only implementation.
