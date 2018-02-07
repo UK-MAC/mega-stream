@@ -68,7 +68,7 @@ PROGRAM megastream
   INTEGER :: i, j, k, l, m, t
 
   ! Print information
-  WRITE(*, '(a)') 'MEGA-STREAM! - v0.3'
+  WRITE(*, '(a)') 'MEGA-STREAM! - v2.0'
   WRITE(*, *)
 
   CALL parse_args(Ni, Nj, Nk, Nl, Nm, ntimes)
