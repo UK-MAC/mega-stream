@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+
+## [v2.1] - 2018-02-07
+
 ### Added
 - 3D version of mega-sweep.
 - Performance model of 2D mega-sweep cache bandwidth.
