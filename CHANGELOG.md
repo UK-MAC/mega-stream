@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - The mega-sweep mini-app has been created. Currently a Fortran only implementation.
 
-### Changed
+### Changed
 - Restructured directory to contain baseline and optimised mega-stream alongside mega-sweep.
 
 
