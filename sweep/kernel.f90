@@ -28,9 +28,10 @@ subroutine sweeper(rank,lrank,rrank,            &
                    psii,psij,                   &
                    mu,eta,                      &
                    w,v,dx,dy,                   &
-                   buf)
+                   buf,sweep_time)
 
   use comms
+  use MPI, only: MPI_Wtime
 
   implicit none
 
@@ -47,6 +48,7 @@ subroutine sweeper(rank,lrank,rrank,            &
   real(kind=8) :: v
   real(kind=8) :: dx, dy
   real(kind=8) :: buf(nang,chunk,ng)
+  real(kind=8) :: sweep_time(nsweeps)
 
   integer :: a, i, j, g, c, cj, sweep
   integer :: istep, jstep ! Spatial step direction
@@ -55,11 +57,14 @@ subroutine sweeper(rank,lrank,rrank,            &
   integer :: cmin, cmax   ! Chunk loop bounds
   integer :: nchunks
   real(kind=8) :: psi
+  real(kind=8) :: sweep_start, sweep_end
 
   ! Calculate number of chunks in y-dimension
   nchunks = ny / chunk
 
   do sweep = 1, nsweeps
+    sweep_start = MPI_Wtime()
+
     ! Set sweep directions
     select case (sweep)
       case (1)
@@ -151,6 +156,11 @@ subroutine sweeper(rank,lrank,rrank,            &
       end if
 
     end do ! chunk loop
+
+    ! Total time in each sweep direction
+    sweep_end = MPI_Wtime()
+    sweep_time(sweep) = sweep_time(sweep) + sweep_end - sweep_start
+
   end do ! sweep loop
 
 end subroutine sweeper

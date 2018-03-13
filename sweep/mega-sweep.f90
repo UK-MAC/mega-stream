@@ -63,9 +63,10 @@ program megasweep
   real(kind=8) :: total_time
   real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
+  real(kind=8), dimension(:), allocatable :: sweep_time
 
   ! Local variables
-  integer :: t, g
+  integer :: t, g, s
   logical :: ydecomp = .false.
   real(kind=8) :: moved ! model of data movement
   real(kind=8) :: lmoved ! model of data movement for single MPI rank
@@ -230,6 +231,7 @@ program megasweep
 
   ! Allocate timers
   allocate(time(ntimes))
+  allocate(sweep_time(nsweeps))
 
   recv_time = 0.0_8
   wait_time = 0.0_8
@@ -252,7 +254,7 @@ program megasweep
                    nang,lnx,ny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v,dx,dy,buf)
+                   mu,eta,w,v,dx,dy,buf,sweep_time)
     end if
 
     ! Swap pointers
@@ -319,14 +321,20 @@ program megasweep
     write(*,"(1x,a,f12.9)") "Fastest iteration (s):   ", minval(time(2:))
     write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
     write(*,*)
-    write(*,"(1x,a,f15.9,f5.1,a)") "Time in MPI_Recv (s):    ", recv_time, 100.0_8*recv_time/total_time, "%"
-    write(*,"(1x,a,f15.9,f5.1,a)") "Time in MPI_Wait (s):    ", wait_time, 100.0_8*wait_time/total_time, "%"
-    write(*,"(1x,a,f15.9,f5.1,a)") "Compute time (s):        ", &
+    write(*,"(1x,a)") "Timings"
+    write(*,"(2x,a)") "Sweeps:"
+    do s = 1, nsweeps
+      write(*,"(3x,i0,a,f15.9)") s, ": ", sweep_time(s)
+    end do
+    write(*,"(2x,a)") "Communication:"
+    write(*,"(3x,a,f15.9,f5.1,a)") "Time in MPI_Recv (s):    ", recv_time, 100.0_8*recv_time/total_time, "%"
+    write(*,"(3x,a,f15.9,f5.1,a)") "Time in MPI_Wait (s):    ", wait_time, 100.0_8*wait_time/total_time, "%"
+    write(*,"(2x,a,f15.9,f5.1,a)") "Compute time (s):        ", &
       sum(time)-recv_time-wait_time, 100.0_8*(sum(time)-recv_time-wait_time)/total_time, "%"
-    write(*,"(1x,a,f15.9,f5.1,a)") "Remaining time (s):      ", &
+    write(*,"(2x,a,f15.9,f5.1,a)") "Remaining time (s):      ", &
       total_time-sum(time), 100.0_8*(total_time-sum(time))/total_time, "%"
     write(*,*)
-    write(*,"(1x,a,f15.9)") "Runtime (s):             ", total_time
+    write(*,"(2x,a,f15.9)") "Runtime (s):             ", total_time
     write(*,*)
     write(*,"(1x,a)")   "All ranks"
     write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
@@ -349,6 +357,7 @@ program megasweep
   deallocate(w)
   deallocate(pop)
   deallocate(time)
+  deallocate(sweep_time)
   deallocate(buf)
 
   call comms_finalize
