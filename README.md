@@ -56,5 +56,5 @@ Additional options can be passed to the Makefile as `make OPTIONS=`.
 ## Publications
 
 - Tom Deakin, John Pennycook, Andrew Mallinson, Wayne Gaudin and Simon McIntosh-Smith. The MEGA-STREAM Benchmark on Intel Xeon Phi Processors (Knights Landing). The Intel Xeon Phi Users Group Spring Meeting, 2017.
-- Tom Deakin, Simon McIntosh-Smith and Wayne Gaudin. On the Mitigation of Cache Hostile Memory Access Patterns on Many-core CPU Architectures. The Intel Xeon Phi Users Group Workshop at International Conference on High Performance Computing, 2017.
+- Tom Deakin, Simon McIntosh-Smith and Wayne Gaudin. On the Mitigation of Cache Hostile Memory Access Patterns on Many-core CPU Architectures. The Intel Xeon Phi Users Group Workshop at International Conference on High Performance Computing, 2017. DOI:[978-3-319-67630-2_26](https://link.springer.com/chapter/10.1007/978-3-319-67630-2_26)
 
