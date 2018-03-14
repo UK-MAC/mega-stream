@@ -28,7 +28,8 @@ subroutine sweeper(rank,lrank,rrank,            &
                    psii,psij,                   &
                    mu,eta,                      &
                    w,v,dx,dy,                   &
-                   buf,sweep_time)
+                   buf,                         &
+                   sweep_time,recv_time,send_time)
 
   use comms
   use MPI, only: MPI_Wtime
@@ -49,6 +50,7 @@ subroutine sweeper(rank,lrank,rrank,            &
   real(kind=8) :: dx, dy
   real(kind=8) :: buf(nang,chunk,ng)
   real(kind=8) :: sweep_time(nsweeps)
+  real(kind=8) :: recv_time, send_time
 
   integer :: a, i, j, g, c, cj, sweep
   integer :: istep, jstep ! Spatial step direction
@@ -58,6 +60,8 @@ subroutine sweeper(rank,lrank,rrank,            &
   integer :: nchunks
   real(kind=8) :: psi
   real(kind=8) :: sweep_start, sweep_end
+  real(kind=8) :: recv_start, recv_end
+  real(kind=8) :: send_start, send_end
 
   ! Calculate number of chunks in y-dimension
   nchunks = ny / chunk
@@ -112,12 +116,15 @@ subroutine sweeper(rank,lrank,rrank,            &
     do c = cmin, cmax, jstep ! Loop over chunks
 
       ! Recv y boundary data for chunk
+      recv_start = MPI_Wtime()
       psii = 0.0_8
       if (istep .eq. 1) then
         call recv(psii, nang*chunk*ng, lrank)
       else
         call recv(psii, nang*chunk*ng, rrank)
       end if
+      recv_end = MPI_Wtime()
+      recv_time = recv_time + recv_end - recv_start
 
       !$omp parallel do private(cj,j,i,a,psi)
       do g = 1, ng                 ! Loop over energy groups
@@ -147,6 +154,7 @@ subroutine sweeper(rank,lrank,rrank,            &
 
       ! Send y boundary data for chunk
       ! NB non-blocking so need to buffer psii, making sure previous send has finished
+      send_start = MPI_Wtime()
       call wait_on_sends
       buf = psii
       if (istep .eq. 1) then
@@ -154,6 +162,8 @@ subroutine sweeper(rank,lrank,rrank,            &
       else
         call send(buf, nang*chunk*ng, lrank)
       end if
+      send_end = MPI_Wtime()
+      send_time = send_time + send_end - send_start
 
     end do ! chunk loop
 
