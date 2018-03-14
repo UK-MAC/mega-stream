@@ -66,9 +66,11 @@ program megasweep3d
   real(kind=8) :: total_time
   real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
+  real(kind=8), dimension(:), allocatable :: sweep_time
+  real(kind=8) :: recv_time, send_time
 
   ! Local variables
-  integer :: t, g
+  integer :: t, g, s
   real(kind=8) :: moved ! model of data movement
 
   call comms_init
@@ -201,6 +203,7 @@ program megasweep3d
 
   ! Allocate timers
   allocate(time(ntimes))
+  allocate(sweep_time(nsweeps))
 
   ! Initilise data
   !$omp parallel do
@@ -221,8 +224,11 @@ program megasweep3d
   dy = 1.0_8 / ny
   dz = 1.0_8 / nz
 
+  mpi_recv_time = 0.0_8
+  mpi_wait_time = 0.0_8
+  sweep_time = 0.0_8
+  send_time = 0.0_8
   recv_time = 0.0_8
-  wait_time = 0.0_8
 
   start_time = MPI_Wtime()
   do t = 1, ntimes
@@ -236,7 +242,9 @@ program megasweep3d
                    aflux0,aflux1,sflux,               &
                    psii,psij,psik,                    &
                    mu,eta,xi,w,v,dx,dy,dz,            &
-                   y_buf,z_buf)
+                   y_buf,z_buf,                       &
+                   sweep_time,recv_time,send_time)
+
 
     ! Swap pointers
     aflux_ptr => aflux0
@@ -288,15 +296,29 @@ program megasweep3d
     write(*,"(1x,a,f12.9)") "Fastest iteration (s):   ", minval(time(2:))
     write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
     write(*,*)
-    write(*,"(1x,a,f15.9,f5.1,a)") "Time in MPI_Recv (s):    ", recv_time, 100.0_8*recv_time/total_time, "%"
-    write(*,"(1x,a,f15.9,f5.1,a)") "Time in MPI_Wait (s):    ", wait_time, 100.0_8*wait_time/total_time, "%"
-    write(*,"(1x,a,f15.9,f5.1,a)") "Compute time (s):        ", &
-      sum(time)-recv_time-wait_time, 100.0_8*(sum(time)-recv_time-wait_time)/total_time, "%"
-    write(*,"(1x,a,f15.9,f5.1,a)") "Remaining time (s):      ", &
+    write(*,"(1x,a)") "Timings (s)"
+    write(*,"(2x,a,f15.9)") "Runtime:         ", total_time
+    write(*,"(2x,a,f15.9)") "Solve time:      ", sum(time)
+    do s = 1, nsweeps
+      write(*,"(3x,a,i0,a,f15.9,f5.1,a)") "Sweep ", s, ":        ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
+    end do
+    write(*,*)
+
+    write(*,"(3x,a,f15.9,f5.1,a)") "Compute time:   ", &
+      sum(time)-recv_time-send_time, 100.0_8*(sum(time)-recv_time-send_time)/total_time, "%"
+    write(*,*)
+
+    write(*,"(3x,a,f15.9,f5.1,a)") "Communication:  ", recv_time+send_time, (recv_time+send_time)/total_time*100.0_8, "%"
+    write(*,"(4x,a,f15.9,f5.1,a)")  "Receives:      ", recv_time, recv_time/total_time*100.0_8, "%"
+    write(*,"(5x,a,f15.9,f5.1,a)")   "MPI_Recv:     ", mpi_recv_time, 100.0_8*mpi_recv_time/total_time, "%"
+    write(*,"(4x,a,f15.9,f5.1,a)")  "Sends:         ", send_time, send_time/total_time*100.0_8, "%"
+    write(*,"(5x,a,f15.9,f5.1,a)")   "MPI_Wait:     ", mpi_wait_time, 100.0_8*mpi_wait_time/total_time, "%"
+    write(*,*)
+
+    write(*,"(2x,a,f15.9,f5.1,a)") "Remaining time:  ", &
       total_time-sum(time), 100.0_8*(total_time-sum(time))/total_time, "%"
     write(*,*)
-    write(*,"(1x,a,f15.9)") "Runtime (s):             ", total_time
-    write(*,*)
+
     write(*,"(1x,a)")   "All ranks"
     write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
@@ -312,6 +334,7 @@ program megasweep3d
   deallocate(w)
   deallocate(pop)
   deallocate(time)
+  deallocate(sweep_time)
 
   call comms_finalize
 

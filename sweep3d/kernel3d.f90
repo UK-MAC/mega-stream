@@ -27,9 +27,11 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
                      aflux0,aflux1,sflux,               &
                      psii,psij,psik,                    &
                      mu,eta,xi,w,v,dx,dy,dz,            &
-                     y_buf,z_buf)
+                     y_buf,z_buf,                       &
+                     sweep_time,recv_time,send_time)
 
   use comms3d
+  use MPI, only: MPI_Wtime
 
   implicit none
 
@@ -49,6 +51,8 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
   real(kind=8) :: dx, dy, dz
   real(kind=8) :: y_buf(nang,chunk,nz,ng)
   real(kind=8) :: z_buf(nang,chunk,ny,ng)
+  real(kind=8) :: sweep_time(nsweeps)
+  real(kind=8) :: recv_time, send_time
 
   integer :: a, i, j, k, g, c, ci, sweep
   integer :: istep, jstep, kstep ! Spatial step direction
@@ -58,11 +62,16 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
   integer :: cmin, cmax   ! Chunk loop bounds
   integer :: nchunks
   real(kind=8) :: psi
+  real(kind=8) :: sweep_start, sweep_end
+  real(kind=8) :: recv_start, recv_end
+  real(kind=8) :: send_start, send_end
 
   ! Calculate number of chunks in x-dimension
   nchunks = nx / chunk
 
   do sweep = 1, nsweeps
+    sweep_start = MPI_Wtime()
+
     ! Set sweep directions
     select case (sweep)
       case (1)
@@ -171,6 +180,7 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
     do c = cmin, cmax, istep ! Loop over chunks
 
       ! Recv boundary data for chunk
+      recv_start = MPI_Wtime()
       psij = 0.0_8
       psik = 0.0_8
       if (jstep .eq. 1) then
@@ -183,6 +193,8 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
       else
         call recv(psik, nang*chunk*ny*ng, zup_rank)
       end if
+      recv_end = MPI_Wtime()
+      recv_time = recv_time + recv_end - recv_start
 
       !$omp parallel do private(k,j,ci,i,a,psi)
       do g = 1, ng                 ! Loop over energy groups
@@ -215,6 +227,7 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
 
       ! Send y boundary data for chunk
       ! NB non-blocking so need to buffer psii, making sure previous send has finished
+      send_start = MPI_Wtime()
       call wait_on_sends
       y_buf = psij
       z_buf = psik
@@ -228,8 +241,15 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
       else
         call zsend(z_buf, nang*chunk*ny*ng, zdown_rank)
       end if
+      send_end = MPI_Wtime()
+      send_time = send_time + send_end - send_start
 
     end do ! chunk loop
+
+    ! Total time in each sweep direction
+    sweep_end = MPI_Wtime()
+    sweep_time(sweep) = sweep_time(sweep) + sweep_end - sweep_start
+
   end do ! sweep loop
 
 end subroutine sweeper3d

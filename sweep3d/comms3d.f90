@@ -30,7 +30,7 @@ module comms3d
   integer :: y_send_request, z_send_request
 
   ! Timer
-  real(kind=8) :: recv_time, wait_time
+  real(kind=8) :: mpi_recv_time, mpi_wait_time
 
 contains
 
@@ -105,7 +105,7 @@ contains
 
     time = MPI_Wtime()
     call MPI_Recv(array, num, MPI_REAL8, from, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, err)
-    recv_time = recv_time + MPI_Wtime() - time
+    mpi_recv_time = mpi_recv_time + MPI_Wtime() - time
 
   end subroutine recv
 
@@ -118,7 +118,7 @@ contains
     time = MPI_Wtime()
     call MPI_Wait(y_send_request, MPI_STATUS_IGNORE, err)
     call MPI_Wait(z_send_request, MPI_STATUS_IGNORE, err)
-    wait_time = wait_time + MPI_Wtime() - time
+    mpi_wait_time = mpi_wait_time + MPI_Wtime() - time
 
   end subroutine wait_on_sends
 
