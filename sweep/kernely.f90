@@ -28,9 +28,11 @@ subroutine sweeper_y(rank,lrank,rrank,          &
                    psii,psij,                   &
                    mu,eta,                      &
                    w,v,dx,dy,                   &
-                   buf)
+                   buf,                         &
+                   sweep_time,recv_time,send_time)
 
   use comms
+  use MPI, only: MPI_Wtime
 
   implicit none
 
@@ -47,6 +49,8 @@ subroutine sweeper_y(rank,lrank,rrank,          &
   real(kind=8) :: v
   real(kind=8) :: dx, dy
   real(kind=8) :: buf(nang,chunk,ng)
+  real(kind=8) :: sweep_time(nsweeps)
+  real(kind=8) :: recv_time, send_time
 
   integer :: a, i, j, g, c, ci, sweep
   integer :: istep, jstep ! Spatial step direction
@@ -55,11 +59,16 @@ subroutine sweeper_y(rank,lrank,rrank,          &
   integer :: cmin, cmax   ! Chunk loop bounds
   integer :: nchunks
   real(kind=8) :: psi
+  real(kind=8) :: sweep_start, sweep_end
+  real(kind=8) :: recv_start, recv_end
+  real(kind=8) :: send_start, send_end
 
   ! Calculate number of chunks in x-dimension
   nchunks = nx / chunk
 
   do sweep = 1, nsweeps
+    sweep_start = MPI_Wtime()
+
     ! Set sweep directions
     select case (sweep)
       case (1)
@@ -107,12 +116,15 @@ subroutine sweeper_y(rank,lrank,rrank,          &
     do c = cmin, cmax, istep ! Loop over chunks
 
       ! Recv x boundary data for chunk
+      recv_start = MPI_Wtime()
       psij = 0.0_8
       if (jstep .eq. 1) then
         call recv(psij, nang*chunk*ng, lrank)
       else
         call recv(psij, nang*chunk*ng, rrank)
       end if
+      recv_end = MPI_Wtime()
+      recv_time = recv_time + recv_end - recv_start
 
       !$omp parallel do private(j,ci,i,a,psi)
       do g = 1, ng                 ! Loop over energy groups
@@ -142,6 +154,7 @@ subroutine sweeper_y(rank,lrank,rrank,          &
 
       ! Send y boundary data for chunk
       ! NB non-blocking so need to buffer psij, making sure previous send has finished
+      send_start = MPI_Wtime()
       call wait_on_sends
       buf = psij
       if (jstep .eq. 1) then
@@ -149,8 +162,15 @@ subroutine sweeper_y(rank,lrank,rrank,          &
       else
         call send(buf, nang*chunk*ng, lrank)
       end if
+      send_end = MPI_Wtime()
+      send_time = send_time + send_end - send_start
 
     end do ! chunk loop
+
+    ! Total time in each sweep direction
+    sweep_end = MPI_Wtime()
+    sweep_time(sweep) = sweep_time(sweep) + sweep_end - sweep_start
+
   end do ! sweep loop
 
 end subroutine sweeper_y

@@ -252,13 +252,15 @@ program megasweep
                    nang,nx,lny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v,dx,dy,buf)
+                   mu,eta,w,v,dx,dy,buf,         &
+                   sweep_time,recv_time,send_time)
     else
       call sweeper(rank,lrank,rrank,             &
                    nang,lnx,ny,ng,nsweeps,chunk, &
                    aflux0,aflux1,sflux,          &
                    psii,psij,                    &
-                   mu,eta,w,v,dx,dy,buf,sweep_time,recv_time,send_time)
+                   mu,eta,w,v,dx,dy,buf,         &
+                   sweep_time,recv_time,send_time)
     end if
 
     ! Swap pointers
