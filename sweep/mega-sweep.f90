@@ -325,25 +325,26 @@ program megasweep
     write(*,"(1x,a,f12.9)") "Fastest iteration (s):   ", minval(time(2:))
     write(*,"(1x,a,f12.9)") "Slowest iteration (s)    ", maxval(time(2:))
     write(*,*)
-    write(*,"(1x,a)") "Timings"
-    write(*,"(2x,a,f15.9)") "Runtime (s):             ", total_time
-    write(*,*)
-    write(*,"(2x,a,f15.9)") "Solve time: ", sum(time)
-    write(*,"(3x,a)") "Sweeps: (s), % of total time"
+    write(*,"(1x,a)") "Timings (s)"
+    write(*,"(2x,a,f15.9)") "Runtime:         ", total_time
+    write(*,"(2x,a,f15.9)") "Solve time:      ", sum(time)
     do s = 1, nsweeps
-      write(*,"(4x,i0,a,f15.9,f5.1,a)") s, ": ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
+      write(*,"(3x,a,i0,a,f15.9,f5.1,a)") "Sweep ", s, ":        ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
     end do
-    write(*,"(3x,a,f15.9,f5.1,a)") "Compute time (s):        ", &
+    write(*,*)
+
+    write(*,"(3x,a,f15.9,f5.1,a)") "Compute time:   ", &
       sum(time)-recv_time-send_time, 100.0_8*(sum(time)-recv_time-send_time)/total_time, "%"
     write(*,*)
 
     write(*,"(3x,a,f15.9,f5.1,a)") "Communication:  ", recv_time+send_time, (recv_time+send_time)/total_time*100.0_8, "%"
-    write(*,"(4x,a,f15.9,f5.1,a)")  "Receives (s):  ", recv_time, recv_time/total_time*100.0_8, "%"
-    write(*,"(5x,a,f15.9,f5.1,a)")   "MPI_Recv (s): ", mpi_recv_time, 100.0_8*mpi_recv_time/total_time, "%"
-    write(*,"(4x,a,f15.9,f5.1,a)")  "Sends (s):     ", send_time, send_time/total_time*100.0_8, "%"
-    write(*,"(5x,a,f15.9,f5.1,a)")   "MPI_Wait (s): ", mpi_wait_time, 100.0_8*mpi_wait_time/total_time, "%"
+    write(*,"(4x,a,f15.9,f5.1,a)")  "Receives:      ", recv_time, recv_time/total_time*100.0_8, "%"
+    write(*,"(5x,a,f15.9,f5.1,a)")   "MPI_Recv:     ", mpi_recv_time, 100.0_8*mpi_recv_time/total_time, "%"
+    write(*,"(4x,a,f15.9,f5.1,a)")  "Sends:         ", send_time, send_time/total_time*100.0_8, "%"
+    write(*,"(5x,a,f15.9,f5.1,a)")   "MPI_Wait:     ", mpi_wait_time, 100.0_8*mpi_wait_time/total_time, "%"
+    write(*,*)
 
-    write(*,"(2x,a,f15.9,f5.1,a)") "Remaining time (s):      ", &
+    write(*,"(2x,a,f15.9,f5.1,a)") "Remaining time:  ", &
       total_time-sum(time), 100.0_8*(total_time-sum(time))/total_time, "%"
     write(*,*)
 
