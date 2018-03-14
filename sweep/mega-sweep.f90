@@ -235,6 +235,7 @@ program megasweep
 
   recv_time = 0.0_8
   wait_time = 0.0_8
+  sweep_time = 0.0_8
 
   start_time = MPI_Wtime()
   do t = 1, ntimes
