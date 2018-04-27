@@ -23,7 +23,7 @@
 
 ! Sweep kernel
 subroutine sweeper(rank,lrank,rrank,            &
-                   nang,nx,ny,ng,nsweeps,chunk, &
+                   nang,nx,ny,ng,nsweeps,chunk,nchunks, &
                    aflux0,aflux1,sflux,         &
                    psii,psij,                   &
                    mu,eta,                      &
@@ -37,9 +37,9 @@ subroutine sweeper(rank,lrank,rrank,            &
   implicit none
 
   integer :: rank, lrank, rrank
-  integer :: nang, nx, ny, ng, nsweeps, chunk
-  real(kind=8) :: aflux0(nang,nx,ny,nsweeps,ng)
-  real(kind=8) :: aflux1(nang,nx,ny,nsweeps,ng)
+  integer :: nang, nx, ny, ng, nsweeps, chunk, nchunks
+  real(kind=8) :: aflux0(nang,nx,chunk,ng,nchunks,nsweeps)
+  real(kind=8) :: aflux1(nang,nx,chunk,ng,nchunks,nsweeps)
   real(kind=8) :: sflux(nx,ny,ng)
   real(kind=8) :: psii(nang,chunk,ng)
   real(kind=8) :: psij(nang,nx,ng)
@@ -57,14 +57,10 @@ subroutine sweeper(rank,lrank,rrank,            &
   integer :: xmin, xmax   ! x-dimension loop bounds
   integer :: ymin, ymax   ! y-dimension (chunk) loop bounds
   integer :: cmin, cmax   ! Chunk loop bounds
-  integer :: nchunks
   real(kind=8) :: psi
   real(kind=8) :: sweep_start, sweep_end
   real(kind=8) :: recv_start, recv_end
   real(kind=8) :: send_start, send_end
-
-  ! Calculate number of chunks in y-dimension
-  nchunks = ny / chunk
 
   do sweep = 1, nsweeps
     sweep_start = MPI_Wtime()
@@ -135,13 +131,13 @@ subroutine sweeper(rank,lrank,rrank,            &
 !dir$ vector nontemporal(aflux1)
             do a = 1, nang         ! Loop over angles
               ! Calculate angular flux
-              psi = (mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,j,sweep,g)) &
+              psi = (mu(a)*psii(a,cj,g) + eta(a)*psij(a,i,g) + v*aflux0(a,i,cj,g,c,sweep)) &
                     / (0.07_8 + 2.0_8*mu(a)/dx + 2.0_8*eta(a)/dy + v)
 
               ! Outgoing diamond difference
               psii(a,cj,g) = 2.0_8*psi - psii(a,cj,g)
               psij(a,i,g) = 2.0_8*psi - psij(a,i,g)
-              aflux1(a,i,j,sweep,g) = 2.0_8*psi - aflux0(a,i,j,sweep,g)
+              aflux1(a,i,cj,g,c,sweep) = 2.0_8*psi - aflux0(a,i,cj,g,c,sweep)
   
               ! Reduction
               sflux(i,j,g) = sflux(i,j,g) + psi*w(a)
