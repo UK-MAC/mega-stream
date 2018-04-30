@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Timing output of each sweep (for first and last rank) and logical communication operations
+- Model bandwidths using just compute time (rather than total time)
 
 ### Changed
 - README updated
