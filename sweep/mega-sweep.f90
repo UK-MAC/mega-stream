@@ -32,6 +32,7 @@ program megasweep
 
   ! MPI variables
   integer :: rank, nprocs
+  integer :: err
   integer :: lrank, rrank ! neighbour ranks
   real(kind=8), dimension(:,:,:), allocatable :: buf ! comms buffer
 
@@ -61,7 +62,7 @@ program megasweep
 
   ! Timers
   real(kind=8) :: start_time, end_time
-  real(kind=8) :: total_time
+  real(kind=8) :: total_time, compute_time
   real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
   real(kind=8), dimension(:), allocatable :: sweep_time
@@ -339,13 +340,27 @@ program megasweep
     write(*,"(1x,a)") "Timings (s)"
     write(*,"(2x,a,f15.9)") "Runtime:         ", total_time
     write(*,"(2x,a,f15.9)") "Solve time:      ", sum(time)
+    write(*,"(3x,a)") "First rank:"
     do s = 1, nsweeps
       write(*,"(3x,a,i0,a,f15.9,f5.1,a)") "Sweep ", s, ":        ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
     end do
+  end if
+
+  call MPI_Barrier(MPI_COMM_WORLD, err)
+  if (rank.EQ.(nprocs-1)) then
+    write(*,"(3x,a)") "Last rank:"
+    do s = 1, nsweeps
+      write(*,"(3x,a,i0,a,f15.9,f5.1,a)") "Sweep ", s, ":        ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
+    end do
+  end if
+  call MPI_Barrier(MPI_COMM_WORLD, err)
+
+  if (rank.EQ.0) then
     write(*,*)
 
+    compute_time = sum(time)-recv_time-send_time
     write(*,"(3x,a,f15.9,f5.1,a)") "Compute time:   ", &
-      sum(time)-recv_time-send_time, 100.0_8*(sum(time)-recv_time-send_time)/total_time, "%"
+      compute_time, 100.0_8*(compute_time)/total_time, "%"
     write(*,*)
 
     write(*,"(3x,a,f15.9,f5.1,a)") "Communication:  ", recv_time+send_time, (recv_time+send_time)/total_time*100.0_8, "%"
@@ -363,13 +378,16 @@ program megasweep
     write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
     write(*,"(2x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/total_time
+    write(*,"(2x,a,f12.2)") "Overall bandwidth for compute (MB/s):", ntimes*moved/compute_time
     write(*,*)
     write(*,"(1x,a)")   "Single rank"
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", lmoved/minval(time(2:))
+    write(*,"(2x,a,f12.2)") "Best bandwidth for compute (MB/s):   ", lmoved/(compute_time/ntimes)
     write(*,"(2x,a,f12.2)") "Thread bandwidth (MB/s): ", tmoved/minval(time(2:))
     write(*,*)
     write(*,"(1x,a)")   "All ranks - cache bandwidth"
     write(*,"(2x,a,f12.2)") "Overall bandwidth (GB/s):", 1.0E-9*8*10*nang*nx*ny*ng*nsweeps*ntimes/total_time
+    write(*,"(2x,a,f12.2)") "Overall bandwidth for compute (GB/s):", 1.0E-9*8*10*nang*nx*ny*ng*nsweeps*ntimes/compute_time
   end if
 
   ! Free data

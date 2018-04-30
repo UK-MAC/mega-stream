@@ -46,6 +46,9 @@ The compute kernel is similar to mega-stream, but additional looping along with 
 
 This mini-app is Fortran only. There are 2- and 3-spatial dimensions versions available.
 
+Sweep timings are printed out for each sweep direction. Note that these are from MPI rank 0, which means that some
+sweeps may appear to take longer than others. This is due to the start-up costs associated with the KBA sweep.
+
 ### Building
 
 The benchmark should build with `make`, and by default uses the default MPI compiler.
