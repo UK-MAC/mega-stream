@@ -32,6 +32,7 @@ program megasweep
 
   ! MPI variables
   integer :: rank, nprocs
+  integer :: err
   integer :: lrank, rrank ! neighbour ranks
   real(kind=8), dimension(:,:,:), allocatable :: buf ! comms buffer
 
@@ -330,9 +331,22 @@ program megasweep
     write(*,"(1x,a)") "Timings (s)"
     write(*,"(2x,a,f15.9)") "Runtime:         ", total_time
     write(*,"(2x,a,f15.9)") "Solve time:      ", sum(time)
+    write(*,"(3x,a)") "First rank:"
     do s = 1, nsweeps
       write(*,"(3x,a,i0,a,f15.9,f5.1,a)") "Sweep ", s, ":        ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
     end do
+  end if
+
+  call MPI_Barrier(MPI_COMM_WORLD, err)
+  if (rank.EQ.(nprocs-1)) then
+    write(*,"(3x,a)") "Last rank:"
+    do s = 1, nsweeps
+      write(*,"(3x,a,i0,a,f15.9,f5.1,a)") "Sweep ", s, ":        ", sweep_time(s), sweep_time(s)/total_time*100.0_8, "%"
+    end do
+  end if
+  call MPI_Barrier(MPI_COMM_WORLD, err)
+
+  if (rank.EQ.0) then
     write(*,*)
 
     write(*,"(3x,a,f15.9,f5.1,a)") "Compute time:   ", &
