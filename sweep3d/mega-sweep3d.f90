@@ -46,12 +46,13 @@ program megasweep3d
   integer :: nx, ny, nz    ! global mesh size
   integer :: lnx, lny, lnz ! local mesh size
   integer :: chunk         ! chunk size
+  integer :: nchunks  ! number of chunks
   integer :: nsweeps       ! sweep direction
   integer :: ntimes        ! number of times
 
   ! Arrays
-  real(kind=8), dimension(:,:,:,:,:,:), pointer :: aflux0, aflux1   ! angular flux
-  real(kind=8), dimension(:,:,:,:,:,:), pointer :: aflux_ptr        ! for pointer swap
+  real(kind=8), dimension(:,:,:,:,:,:,:), pointer :: aflux0, aflux1   ! angular flux
+  real(kind=8), dimension(:,:,:,:,:,:,:), pointer :: aflux_ptr        ! for pointer swap
   real(kind=8), dimension(:,:,:,:), allocatable :: sflux            ! scalar flux
   real(kind=8), dimension(:), allocatable :: mu, eta, xi            ! angular cosines
   real(kind=8), dimension(:,:,:,:), allocatable :: psii, psij, psik ! edge angular flux
@@ -123,6 +124,7 @@ program megasweep3d
   lnx = nx
   lny = ny / npey
   lnz = nz / npez
+  nchunks = lnx / chunk
 
   ! Set ranks
   yrank = MOD(rank,npey)
@@ -187,8 +189,8 @@ program megasweep3d
   end if
 
   ! Allocate data
-  allocate(aflux0(nang,lnx,lny,lnz,nsweeps,ng))
-  allocate(aflux1(nang,lnx,lny,lnz,nsweeps,ng))
+  allocate(aflux0(nang,chunk,lny,lnz,ng,nchunks,nsweeps))
+  allocate(aflux1(nang,chunk,lny,lnz,ng,nchunks,nsweeps))
   allocate(sflux(lnx,lny,lnz,ng))
   allocate(mu(nang))
   allocate(eta(nang))
@@ -208,8 +210,8 @@ program megasweep3d
   ! Initilise data
   !$omp parallel do
   do g = 1, ng
-    aflux0(:,:,:,:,:,g) = 1.0_8
-    aflux1(:,:,:,:,:,g) = 0.0_8
+    aflux0(:,:,:,:,g,:,:) = 1.0_8
+    aflux1(:,:,:,:,g,:,:) = 0.0_8
     sflux(:,:,:,g) = 0.0_8
     psii(:,:,:,g)= 0.0_8
     psij(:,:,:,g)= 0.0_8
@@ -238,7 +240,7 @@ program megasweep3d
     ! Don't zero scalar flux, as it goes negative - OK for this benchmark with fake numbers
 
     call sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
-                   nang,lnx,lny,lnz,ng,nsweeps,chunk, &
+                   nang,lnx,lny,lnz,ng,nsweeps,chunk,nchunks, &
                    aflux0,aflux1,sflux,               &
                    psii,psij,psik,                    &
                    mu,eta,xi,w,v,dx,dy,dz,            &
