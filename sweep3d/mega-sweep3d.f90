@@ -63,7 +63,7 @@ program megasweep3d
 
   ! Timers
   real(kind=8) :: start_time, end_time
-  real(kind=8) :: total_time
+  real(kind=8) :: total_time, compute_time
   real(kind=8) :: timer
   real(kind=8), dimension(:), allocatable :: time
   real(kind=8), dimension(:), allocatable :: sweep_time
@@ -304,8 +304,9 @@ program megasweep3d
     end do
     write(*,*)
 
+    compute_time = sum(time)-recv_time-send_time
     write(*,"(3x,a,f15.9,f5.1,a)") "Compute time:   ", &
-      sum(time)-recv_time-send_time, 100.0_8*(sum(time)-recv_time-send_time)/total_time, "%"
+      compute_time, 100.0_8*compute_time/total_time, "%"
     write(*,*)
 
     write(*,"(3x,a,f15.9,f5.1,a)") "Communication:  ", recv_time+send_time, (recv_time+send_time)/total_time*100.0_8, "%"
@@ -323,6 +324,7 @@ program megasweep3d
     write(*,"(2x,a,f12.2)") "Estimate moved (MB):     ", moved
     write(*,"(2x,a,f12.2)") "Best bandwidth (MB/s):   ", moved/minval(time(2:))
     write(*,"(2x,a,f12.2)") "Overall bandwidth (MB/s):", ntimes*moved/total_time
+    write(*,"(2x,a,f12.2)") "Overall bandwidth for compute (MB/s):", ntimes*moved/compute_time
     write(*,*)
   end if
 
