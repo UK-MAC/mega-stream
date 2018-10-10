@@ -121,7 +121,13 @@ subroutine sweeper(rank,lrank,rrank,            &
 
       ! Recv y boundary data for chunk
       recv_start = MPI_Wtime()
-      psii = 0.0_8
+
+      !$omp parallel do
+      do g = 1, ng
+        psii(:,:,g) = 0.0_8
+      end do
+      !$omp end parallel do
+
       if (istep .eq. 1) then
         call recv(psii, nang*chunk*ng, lrank)
       else
