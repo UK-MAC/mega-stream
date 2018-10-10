@@ -414,7 +414,7 @@ subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
         write(*, *) "--nx     n  Set number of cells in x dimension"
         write(*, *) "--ny     n  Set number of cells in y dimension"
         write(*, *) "--nz     n  Set number of cells in z dimension"
-        write(*, *) "--chunk  n  Set y-dimension chunk size"
+        write(*, *) "--chunk  n  Set x-dimension chunk size"
         write(*, *) "--ntimes n  Run the benchmark n times"
         write(*, *)
         write(*, *) "Default sizes"
@@ -423,6 +423,8 @@ subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
         write(*, '(2x,a,i0)') "nx:   ", nx
         write(*, '(2x,a,i0)') "ny:   ", ny
         write(*, '(2x,a,i0)') "chunk:", chunk
+        write(*,*)
+        write(*, '(2x,a)') "MPI decomposition is in YZ dimensions."
       end if
       stop
     else

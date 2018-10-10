@@ -45,6 +45,7 @@ The mega-sweep mini-app aims to take the mega-stream kernel and fit it within a 
 The compute kernel is similar to mega-stream, but additional looping along with MPI communication is included.
 
 This mini-app is Fortran only. There are 2- and 3-spatial dimensions versions available.
+The 3D version decomposes in the YZ dimensions.
 
 Sweep timings are printed out for each sweep direction. Note that these are from MPI rank 0, which means that some
 sweeps may appear to take longer than others. This is due to the start-up costs associated with the KBA sweep.
