@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - README updated
+- Ensured psi* arrays are copied/zeroed in parallel in mega-sweep
 
 
 ## [v2.1] - 2018-02-07
