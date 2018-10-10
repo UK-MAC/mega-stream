@@ -181,8 +181,14 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
 
       ! Recv boundary data for chunk
       recv_start = MPI_Wtime()
-      psij = 0.0_8
-      psik = 0.0_8
+
+      !$omp parallel do
+      do g = 1, ng
+        psij(:,:,:,g) = 0.0_8
+        psik(:,:,:,g) = 0.0_8
+      end do
+      !$omp end parallel do
+
       if (jstep .eq. 1) then
         call recv(psij, nang*chunk*nz*ng, ydown_rank)
       else
@@ -229,8 +235,14 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
       ! NB non-blocking so need to buffer psii, making sure previous send has finished
       send_start = MPI_Wtime()
       call wait_on_sends
-      y_buf = psij
-      z_buf = psik
+
+      !$omp parallel do
+      do g = 1, ng
+        y_buf(:,:,:,g) = psij(:,:,:,g)
+        z_buf(:,:,:,g) = psik(:,:,:,g)
+      end do
+      !$omp end parallel do
+
       if (jstep .eq. 1) then
         call ysend(y_buf, nang*chunk*nz*ng, yup_rank)
       else
