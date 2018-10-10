@@ -173,9 +173,13 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
     end select
 
     ! Zero boundary data every sweep
-    psii = 0.0_8
-    psij = 0.0_8
-    psik = 0.0_8
+    !$omp parallel do
+    do g = 1, ng
+      psii(:,:,:,g) = 0.0_8
+      psij(:,:,:,g) = 0.0_8
+      psik(:,:,:,g) = 0.0_8
+    end do
+    !$omp end parallel do
 
     do c = cmin, cmax, istep ! Loop over chunks
 
