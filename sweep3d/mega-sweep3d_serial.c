@@ -208,7 +208,7 @@ void sweep(const int nang, const int nx, const int ny, const int nz, const int n
         cmax = nchunks;
         jstep = 1;
         ymin = 0;
-        ymax = ny-1;
+        ymax = ny;
         kstep = -1;
         zmin = nz-1;
         zmax = -1;
@@ -265,7 +265,7 @@ void sweep(const int nang, const int nx, const int ny, const int nz, const int n
         cmax = nchunks;
         jstep = 1;
         ymin = 0;
-        ymax = ny-1;
+        ymax = ny;
         kstep = 1;
         zmin = 0;
         zmax = nz;
