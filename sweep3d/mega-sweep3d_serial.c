@@ -37,7 +37,7 @@
 #define NY      8
 #define NZ      8
 #define CHUNK   16
-#define NTIMES  500
+#define NTIMES  100
 #define NSWEEPS 8
 
 
