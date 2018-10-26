@@ -83,7 +83,7 @@ int _start()
   for (int i = 0; i < NANG; ++i) {
     mu[i] = 0.33;
     eta[i] = 0.66;
-    xi[i] = 0.6749074011; // sqrt(1 - mu*mu - eta*eta)
+    xi[i] = 0.674907; // sqrt(1 - mu*mu - eta*eta)
     w[i] = 0.4;
   }
 
