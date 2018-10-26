@@ -132,7 +132,7 @@ int _start()
     population += pop[g];
   }
 
-  printf("Population: %E\n", population);
+  //printf("Population: %E\n", population);
 
   return 0;
 }
