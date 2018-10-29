@@ -49,7 +49,7 @@ void sweep(const int nang, const int nx, const int ny, const int nz, const int n
            double * restrict y_buf, double * restrict z_buf);
 
 
-int _start()
+double _start()
 {
   // Allocate arrays
   double aflux0[NANG*NX*NY*NZ*NSWEEPS*NG];
@@ -134,7 +134,7 @@ int _start()
 
   //printf("Population: %E\n", population);
 
-  return 0;
+  return population;
 }
 
 
