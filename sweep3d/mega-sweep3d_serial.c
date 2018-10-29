@@ -152,7 +152,9 @@ void sweep(const int nang, const int nx, const int ny, const int nz, const int n
   int istep, jstep, kstep;
   int xmin, xmax, ymin, ymax, zmin, zmax, cmin, cmax;
 
-  for (int sweep = 0; sweep < nsweeps; ++sweep) {
+  // Just do ONE sweep direction to reduce the runtime by 8
+  //for (int sweep = 0; sweep < nsweeps; ++sweep) {
+  int sweep = 0; {
 
     // Set sweep directions
     // Minimum is inclusive, maximum is exclusive
