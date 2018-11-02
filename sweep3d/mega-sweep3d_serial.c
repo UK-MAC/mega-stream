@@ -149,6 +149,11 @@ void sweep(const int nang, const int nx, const int ny, const int nz, const int n
   // Calculate number of chunks in x-direction
   int nchunks = nx / chunk;
 
+  // Calculate inverse of spatial width to manually hoist divide operations
+  double idx = 1.0 / dx;
+  double idy = 1.0 / dy;
+  double idz = 1.0 / dz;
+
   int istep, jstep, kstep;
   int xmin, xmax, ymin, ymax, zmin, zmax, cmin, cmax;
 
@@ -309,7 +314,7 @@ void sweep(const int nang, const int nx, const int ny, const int nz, const int n
                   xi[a]  * psik[a + nang*ci + nang*chunk*j + nang*chunk*ny*g] +
                   v * aflux0[a + nang*i + nang*nx*j + nang*nx*ny*k + nang*nx*ny*nz*sweep + nang*nx*ny*nz*nsweeps*g])
                   / (
-                    0.07 + 2.0*mu[a]/dx + 2.0*eta[a]/dy + 2.0*xi[a]/dz + v
+                    0.07 + 2.0*mu[a]*idx + 2.0*eta[a]*idy + 2.0*xi[a]*idz + v
                   );
 
                 // Outgoing diamond difference
