@@ -49,6 +49,8 @@ program megasweep3d
   integer :: nsweeps       ! sweep direction
   integer :: ntimes        ! number of times
 
+  logical :: profile ! When true, turns of solution checking
+
   ! Arrays
   real(kind=8), dimension(:,:,:,:,:,:), pointer :: aflux0, aflux1   ! angular flux
   real(kind=8), dimension(:,:,:,:,:,:), pointer :: aflux_ptr        ! for pointer swap
@@ -92,8 +94,10 @@ program megasweep3d
   chunk = 1
   ntimes = 500
 
+  profile = .false.
+
   ! Read in command line arguments
-  call parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
+  call parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes,profile)
 
   ! Check nx can be split into even number of chunks
   if (mod(nx,chunk) .ne. 0) then
@@ -258,26 +262,30 @@ program megasweep3d
 
   total_time = end_time - start_time
 
-  ! Check angular flux is non-zero
-  ! If still zero, then sweep didn't touch a cell
-  if (any(aflux0 .eq. 0.0_8)) then
-    write(*,"(a,i0)") "Warning: angular flux 0 contains zero values on rank ", rank
-    write(*,*)
-  end if
-  if (any(aflux1 .eq. 0.0_8)) then
-    write(*,"(a,i0)") "Warning: angular flux 1 contains zero values on rank ", rank
-    write(*,*)
-  end if
+  if (.not.profile) then
 
-  ! Collate solution
-  call population(lnx,lny,lnz,ng,sflux,dx,dy,dz,pop,total_pop)
-  if (rank .eq. 0) then
-    write(*,"(a)") "Population"
-    do g = 1, ng
-      write(*,"(1x,i0,a,e23.16)") g, ":", pop(g)
-    end do
-    write(*,"(1x,a,e23.16)") "Total:                   ", total_pop
-    write(*,*)
+    ! Check angular flux is non-zero
+    ! If still zero, then sweep didn't touch a cell
+    if (any(aflux0 .eq. 0.0_8)) then
+      write(*,"(a,i0)") "Warning: angular flux 0 contains zero values on rank ", rank
+      write(*,*)
+    end if
+    if (any(aflux1 .eq. 0.0_8)) then
+      write(*,"(a,i0)") "Warning: angular flux 1 contains zero values on rank ", rank
+      write(*,*)
+    end if
+
+    ! Collate solution
+    call population(lnx,lny,lnz,ng,sflux,dx,dy,dz,pop,total_pop)
+    if (rank .eq. 0) then
+      write(*,"(a)") "Population"
+      do g = 1, ng
+        write(*,"(1x,i0,a,e23.16)") g, ":", pop(g)
+      end do
+      write(*,"(1x,a,e23.16)") "Total:                   ", total_pop
+      write(*,*)
+    end if
+
   end if
 
 
@@ -368,12 +376,13 @@ subroutine population(nx, ny, nz, ng, sflux, dx, dy, dz, pop, total)
 
 end subroutine population
 
-subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
+subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes,profile)
 
   implicit none
 
   integer, intent(in)   :: rank
   integer, intent(inout) :: nang, nx, ny, nz, ng, chunk, ntimes
+  logical, intent(inout) :: profile
 
   character(len=32) :: arg
 
@@ -409,6 +418,8 @@ subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
       i = i + 1
       call getarg(i, arg)
       read(arg, *) ntimes
+    else if (arg .eq. "--prof") then
+      profile = .true.
     else if (arg .eq. "--help") then
       if (rank .eq. 0) then
         write(*, *) "--nang   n  Set number of angles"
@@ -416,8 +427,9 @@ subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
         write(*, *) "--nx     n  Set number of cells in x dimension"
         write(*, *) "--ny     n  Set number of cells in y dimension"
         write(*, *) "--nz     n  Set number of cells in z dimension"
-        write(*, *) "--chunk  n  Set y-dimension chunk size"
+        write(*, *) "--chunk  n  Set x-dimension chunk size"
         write(*, *) "--ntimes n  Run the benchmark n times"
+        write(*,*)  "--prof      Run in profiler mode: removes solution check"
         write(*, *)
         write(*, *) "Default sizes"
         write(*, '(2x,a,i0)') "nang: ", nang
@@ -425,6 +437,8 @@ subroutine parse_args(rank,nang,nx,ny,nz,ng,chunk,ntimes)
         write(*, '(2x,a,i0)') "nx:   ", nx
         write(*, '(2x,a,i0)') "ny:   ", ny
         write(*, '(2x,a,i0)') "chunk:", chunk
+        write(*,*)
+        write(*, '(2x,a)') "MPI decomposition is in YZ dimensions."
       end if
       stop
     else

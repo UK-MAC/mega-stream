@@ -110,14 +110,24 @@ subroutine sweeper(rank,lrank,rrank,            &
     end select
 
     ! Zero boundary data every sweep
-    psii = 0.0_8
-    psij = 0.0_8
+    !$omp parallel do
+    do g = 1, ng
+      psii(:,:,g) = 0.0_8
+      psij(:,:,g) = 0.0_8
+    end do
+    !$omp end parallel do
 
     do c = cmin, cmax, jstep ! Loop over chunks
 
       ! Recv y boundary data for chunk
       recv_start = MPI_Wtime()
-      psii = 0.0_8
+
+      !$omp parallel do
+      do g = 1, ng
+        psii(:,:,g) = 0.0_8
+      end do
+      !$omp end parallel do
+
       if (istep .eq. 1) then
         call recv(psii, nang*chunk*ng, lrank)
       else
@@ -156,7 +166,13 @@ subroutine sweeper(rank,lrank,rrank,            &
       ! NB non-blocking so need to buffer psii, making sure previous send has finished
       send_start = MPI_Wtime()
       call wait_on_sends
-      buf = psii
+
+      !$omp parallel do
+      do g = 1, ng
+        buf(:,:,g) = psii(:,:,g)
+      end do
+      !$omp end parallel do
+
       if (istep .eq. 1) then
         call send(buf, nang*chunk*ng, rrank)
       else
