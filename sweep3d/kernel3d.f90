@@ -63,11 +63,17 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
   integer :: nchunks
   real(kind=8) :: psi
   real(kind=8) :: sweep_start, sweep_end
+  real(kind=8) :: invdx, invdy, invdz
   real(kind=8) :: recv_start, recv_end
   real(kind=8) :: send_start, send_end
 
   ! Calculate number of chunks in x-dimension
   nchunks = nx / chunk
+
+  ! Invert spatial width to remove divisions
+  invdx = 2.0_8 / dx
+  invdy = 2.0_8 / dy
+  invdz = 2.0_8 / dz
 
   do sweep = 1, nsweeps
     sweep_start = MPI_Wtime()
@@ -217,7 +223,7 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
               do a = 1, nang         ! Loop over angles
                 ! Calculate angular flux
                 psi = (mu(a)*psii(a,j,k,g) + eta(a)*psij(a,ci,k,g) + xi(a)*psik(a,ci,j,g) + v*aflux0(a,i,j,k,sweep,g)) &
-                      / (0.07_8 + 2.0_8*mu(a)/dx + 2.0_8*eta(a)/dy + 2.0_8*xi(a)/dz + v)
+                      / (0.07_8 + mu(a)*invdx + eta(a)*invdy + xi(a)*invdz + v)
 
                 ! Outgoing diamond difference
                 psii(a,j,k,g) = 2.0_8*psi - psii(a,j,k,g)
