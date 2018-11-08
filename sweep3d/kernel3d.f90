@@ -27,6 +27,7 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
                      aflux0,aflux1,sflux,               &
                      psii,psij,psik,                    &
                      mu,eta,xi,w,v,dx,dy,dz,            &
+                     denom,                             &
                      y_buf,z_buf,                       &
                      sweep_time,recv_time,send_time)
 
@@ -49,6 +50,7 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
   real(kind=8) :: w(nang)
   real(kind=8) :: v
   real(kind=8) :: dx, dy, dz
+  real(kind=8) :: denom(nang,nx,ny,nz,ng)
   real(kind=8) :: y_buf(nang,chunk,nz,ng)
   real(kind=8) :: z_buf(nang,chunk,ny,ng)
   real(kind=8) :: sweep_time(nsweeps)
@@ -223,7 +225,8 @@ subroutine sweeper3d(rank,yup_rank,ydown_rank,zup_rank,zdown_rank,      &
               do a = 1, nang         ! Loop over angles
                 ! Calculate angular flux
                 psi = (mu(a)*psii(a,j,k,g) + eta(a)*psij(a,ci,k,g) + xi(a)*psik(a,ci,j,g) + v*aflux0(a,i,j,k,sweep,g)) &
-                      / (0.07_8 + mu(a)*invdx + eta(a)*invdy + xi(a)*invdz + v)
+                      * denom(a,i,j,k,g)
+                      !/ (0.07_8 + mu(a)*invdx + eta(a)*invdy + xi(a)*invdz + v)
 
                 ! Outgoing diamond difference
                 psii(a,j,k,g) = 2.0_8*psi - psii(a,j,k,g)

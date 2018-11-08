@@ -60,6 +60,7 @@ program megasweep3d
   real(kind=8), dimension(:), allocatable :: w                      ! scalar flux weights
   real(kind=8) :: v                                                 ! time constant
   real(kind=8) :: dx, dy, dz                                        ! cell size
+  real(kind=8), dimension(:,:,:,:,:), allocatable :: denom          ! sweep denominator
   real(kind=8), dimension(:), allocatable :: pop                    ! scalar flux reduction
   real(kind=8) :: total_pop
 
@@ -72,7 +73,7 @@ program megasweep3d
   real(kind=8) :: recv_time, send_time
 
   ! Local variables
-  integer :: t, g, s
+  integer :: t, g, a, s
   real(kind=8) :: moved ! model of data movement
 
   call comms_init
@@ -201,6 +202,7 @@ program megasweep3d
   allocate(psij(nang,chunk,lnz,ng))
   allocate(psik(nang,chunk,lny,ng))
   allocate(w(nang))
+  allocate(denom(nang,nx,ny,nz,ng))
   allocate(pop(ng))
   allocate(y_buf(nang,chunk,lnz,ng))
   allocate(z_buf(nang,chunk,lny,ng))
@@ -228,6 +230,14 @@ program megasweep3d
   dy = 1.0_8 / ny
   dz = 1.0_8 / nz
 
+  ! Compute denominator
+  !$omp parallel do
+  do g = 1, ng
+    do a = 1, nang
+      denom(a,:,:,:,g) = 1.0_8 / (0.07_8 + mu(a)*2.0/dx + eta(a)*2.0/dy + xi(a)*2.0/dz + v)
+    end do
+  end do
+
   mpi_recv_time = 0.0_8
   mpi_wait_time = 0.0_8
   sweep_time = 0.0_8
@@ -246,6 +256,7 @@ program megasweep3d
                    aflux0,aflux1,sflux,               &
                    psii,psij,psik,                    &
                    mu,eta,xi,w,v,dx,dy,dz,            &
+                   denom,                             &
                    y_buf,z_buf,                       &
                    sweep_time,recv_time,send_time)
 
