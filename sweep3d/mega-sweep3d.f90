@@ -27,6 +27,7 @@ program megasweep3d
   ! 3D version
 
   use comms3d
+  use papi_interface
   use omp_lib
 
   implicit none
@@ -83,6 +84,9 @@ program megasweep3d
   !$omp parallel
     nthreads = omp_get_num_threads()
   !$omp end parallel
+
+  ! Set up PAPI (if using)
+  call papi_init
 
   ! Set default problem sizes
   nx = 128
@@ -234,6 +238,9 @@ program megasweep3d
   send_time = 0.0_8
   recv_time = 0.0_8
 
+  ! Start performance counters
+  call papi_start
+
   start_time = MPI_Wtime()
   do t = 1, ntimes
 
@@ -261,6 +268,9 @@ program megasweep3d
   end_time = MPI_Wtime()
 
   total_time = end_time - start_time
+
+  ! Stop and output performance counters
+  call papi_stop
 
   if (.not.profile) then
 

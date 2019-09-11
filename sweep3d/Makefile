@@ -19,20 +19,24 @@
 
 # Default compiler and flags
 FTN_ = mpif90
+CC_ = cc
 FFLAGS_ = -O3
 
 # Intel settings
 FTN_INTEL = mpiifort
+CC_INTEL = icc
 FFLAGS_INTEL = -O3 -xHost -align array256byte -qopt-report=5
 OMP_INTEL = -qopenmp
 
 # GNU settings
 FTN_GNU = mpif90
+CC_GNU = gcc
 FFLAGS_GNU = -O3 -ffree-line-length-none
 OMP_GNU = -fopenmp
 
 # Cray settings
 FTN_CRAY = ftn
+CC_CRAY = cc
 FFLAGS_CRAY = -O3
 OMP_CRAY =
 
@@ -43,13 +47,24 @@ endif
 
 # Choose compiler
 FTN=$(FTN_$(COMPILER))
+CC=$(CC_$(COMPILER))
 FFLAGS=$(FFLAGS_$(COMPILER))
 OMP=$(OMP_$(COMPILER))
 
+# PAPI library
+ifdef PAPI
+  PAPI_LIB = -DPAPI -lpapi
+endif
+
 default: mega-sweep3d
 
-mega-sweep3d: comms3d.f90 kernel3d.f90 mega-sweep3d.f90
-	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@
+papi.o papi_interface.mod: papi.c
+	$(CC) papi.c -c $(OMP) $(PAPI_LIB)
+	# Ensure the .mod file is produced before we try to compile
+	$(FTN) papi_interface.f90 -c
+
+mega-sweep3d: comms3d.f90 kernel3d.f90 mega-sweep3d.f90 papi_interface.f90 papi.o
+	$(FTN) $(FFLAGS) $(OPTIONS) $(OMP) $^ -o $@ $(PAPI_LIB)
 
 .PHONY: clean
 clean:
