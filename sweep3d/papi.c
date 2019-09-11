@@ -79,7 +79,9 @@ void papi_start() {
   // Add events to the set
   for (int i = 0; i < num_events; ++i) {
     if (PAPI_add_event(event_set, events[i]) != PAPI_OK) {
-      fprintf(stderr, "Error: adding PAPI event %d\n", events[i]);
+      PAPI_event_info_t info;
+      PAPI_get_event_info(events[i], &info);
+      fprintf(stderr, "Error: adding PAPI event %s\n", info.symbol);
       exit(EXIT_FAILURE);
     }
   }
