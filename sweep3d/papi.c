@@ -30,7 +30,7 @@
 
 static int event_set = PAPI_NULL;
 static int num_events = 0;
-static long_long *values = NULL;
+static long_long *values;
 
 #endif
 
@@ -49,7 +49,7 @@ void papi_init() {
     fprintf(stderr, "PAPI init error\n");
     exit(EXIT_FAILURE);
   }
-  if (PAPI_thread_init(omp_get_thread_num) != PAPI_OK) {
+  if (PAPI_thread_init((unsigned long (*)(void)) omp_get_thread_num) != PAPI_OK) {
     fprintf(stderr, "PAPI thread init error\n");
     exit(EXIT_FAILURE);
   }
@@ -63,7 +63,7 @@ void papi_start() {
   printf("Starting PAPI counters...\n");  
 
   // List of events to collect
-  int[] events = {PAPI_TOT_INS,PAPI_LD_INS,PAPI_FP_INS};
+  int events[] = {PAPI_TOT_INS,PAPI_LD_INS,PAPI_FP_INS};
 
   num_events = sizeof(events) / sizeof(int);
 
